@@ -2,7 +2,7 @@
 
 Kibo (**Ki**ta-**Bo**ard) ist eine digitale Pinnwand, auf der sich die Eltern einer Kita selbst austauschen: gefunden, gesucht, zu verschenken. Die Kita-Leitung legt Bretter an und teilt sie über einen nicht erratbaren Link oder QR-Code; wer den Link hat, pinnt dort Zettel an – im Browser, ohne Konto und ohne Messenger-Gruppe.
 
-Aktuelle Version: **1.1.1** – Änderungen stehen im [CHANGELOG](CHANGELOG.md).
+Aktuelle Version: **1.2.1** – Änderungen stehen im [CHANGELOG](CHANGELOG.md).
 
 ![Eine Pinnwand in Kibo: Hinweise, Fragen und Termine als farbige Zettel auf einer Filzwand](docs/screenshots/board-pinnwand.webp)
 
@@ -30,11 +30,13 @@ Wie Kibo benutzt und betrieben wird, steht in der **[Dokumentation](docs/README.
 ## Funktionen
 
 - **Kitas:** Jede Kita ist eine eigene Organisation. Wer sich registriert, legt dabei seine Kita an und ist ihre Inhaberin oder ihr Inhaber. Inhaber laden weitere Admins per E-Mail ein: Alle verwalten Bretter und Zettel gemeinsam; einladen, Mitglieder entfernen und die Kita umbenennen kann nur, wem sie gehört. Admins können eine Kita wieder verlassen.
-- **Anmeldung:** E-Mail und Passwort, optional mit Zwei-Faktor-Authentifizierung per Authenticator-App (TOTP) inklusive Backup-Codes zum Kopieren oder Herunterladen. Ein Konto kann bis zu drei Kitas anlegen; Mitgliedschaften per Einladung zählen nicht mit. Pro Instanz lässt sich die Registrierung schließen oder auf bestimmte E-Mail-Domains beschränken; Konten legt dann der Betrieb per Skript an, und wer zu einer Kita eingeladen ist, registriert sich über den Link aus der Einladungsmail.
+- **Anmeldung:** E-Mail und Passwort, optional mit Zwei-Faktor-Authentifizierung per Authenticator-App (TOTP) inklusive Backup-Codes zum Kopieren oder Herunterladen, oder mit Passkey. Ein Konto kann bis zu drei Kitas anlegen; Mitgliedschaften per Einladung zählen nicht mit. Pro Instanz lässt sich die Registrierung schließen oder auf bestimmte E-Mail-Domains beschränken; Konten legt dann der Betrieb per Skript an, und wer zu einer Kita eingeladen ist, registriert sich über den Link aus der Einladungsmail.
 - **Admin-Bereich:** unter `/admin`, mit Kita-Wechsler, Dashboard, Brettern, Kita-Einstellungen und Kontoeinstellungen.
 - **Bretter:** Jede Kita legt beliebig viele Bretter an. Die Art des Bretts bestimmt die Kategorien: Fundkiste (Gesucht/Gefunden), Biete & Suche oder Pinnwand (Hinweis/Frage/Termin).
 - **Teilen:** Jede Kita hat einen nicht erratbaren Kita-Link `/k/…/`, der alle ihre Bretter zeigt, im Admin-Bereich auch als QR-Code zum Ausdrucken – für die ganze Kita oder direkt zu einem Brett. Ein neuer Kita-Link macht alle alten Links ungültig.
 - **Zettel:** Besucher pinnen ohne Konto Zettel an, die nach 7, 14 oder 30 Tagen automatisch verschwinden. Eigene Zettel lassen sich vom selben Gerät aus vorzeitig abnehmen. Die Kita kann jeden Zettel entfernen.
+- **Meldungen:** Wer einen Zettel für unpassend hält, meldet ihn ohne Konto; die Kita bekommt eine E-Mail und bearbeitet die Meldung im Admin-Bereich. Rechtswidrige Inhalte lassen sich zusätzlich an den Betreiber der Instanz melden (Digital Services Act).
+- **Datenexport:** Jede Kita lädt ihre Bretter und aktuellen Zettel jederzeit als JSON-Datei herunter; das Format ist in [`docs/selbst-hosten/datenexport.md`](docs/selbst-hosten/datenexport.md) beschrieben.
 - **Benachrichtigungen:** Eltern schalten per Glocke Benachrichtigungen für ein Brett ein und erfahren auf dem Handy, sobald dort ein neuer Zettel hängt – über Web Push, ohne App und ohne Drittanbieter-Konto. Die Kita-Seite kommt einmal auf den Home-Bildschirm, die Glocke gibt es pro Brett; auf dem iPhone ab iOS 18.4. Neue Zettel werden gesammelt und gedrosselt; die Kita kann die Funktion pro Brett abschalten. Optional, siehe [Benachrichtigungen (Web-Push)](docs/selbst-hosten/benachrichtigungen.md).
 - **Spam-Schutz:** Honeypot-Feld, mehrstufige Budgets je Netz und je Link, Erkennung wiederholter Inhalte, begrenzte Anmeldeversuche, Auth-Mails und Einladungen. Gezählt wird in PostgreSQL, also über Neustarts und Prozesse hinweg. Die eigenen Budgets speichern statt IP-Adressen, Links, E-Mail-Adressen oder Zetteltexten nur HMAC-Prüfwerte, die nach spätestens gut einem Tag verfallen. IP-Adressen im Klartext speichert nur Better Auth: in den Zählern seiner Anmeldebegrenzung (etwa eine Stunde) und zu jeder Sitzung eines Kita-Kontos (samt Browserkennung, solange die Sitzung läuft). Regeln und Grenzwerte: [`docs/selbst-hosten/spam-schutz.md`](docs/selbst-hosten/spam-schutz.md).
 - **Sicherheits-Header:** Content-Security-Policy, Schutz vor Einbettung, keine Referrer von Brettern und `no-store` für den Admin-Bereich setzt die Anwendung selbst; HSTS kommt vom Reverse Proxy.
@@ -47,7 +49,7 @@ Wie Kibo benutzt und betrieben wird, steht in der **[Dokumentation](docs/README.
 - [Tailwind CSS 4](https://tailwindcss.com)
 - [shadcn-vue](https://www.shadcn-vue.com) für den Admin-Bereich, eigene Gestaltung für die öffentliche Seite
 - [PostgreSQL](https://www.postgresql.org) mit [Drizzle ORM](https://orm.drizzle.team)
-- [Better Auth](https://www.better-auth.com) mit Organisations- und Zwei-Faktor-Plugin
+- [Better Auth](https://www.better-auth.com) mit Organisations-, Zwei-Faktor- und Passkey-Plugin
 - [Bun](https://bun.sh) als Paketmanager
 
 ## Voraussetzungen
@@ -157,7 +159,7 @@ Vor jedem Commit sollten `bun run check` und `bun run fallow` ohne Fehler durchl
 
 ## Versionen
 
-Kibo folgt [Semantic Versioning](https://semver.org/lang/de/). Jede Version ist ein Git-Tag `vX.Y.Z`, aus dem die CI beide Images baut; was sich geändert hat und was beim Update zu beachten ist, steht im [CHANGELOG](CHANGELOG.md).
+Kibo folgt [Semantic Versioning](https://semver.org/lang/de/). Jede Version ist ein Git-Tag `vX.Y.Z`, aus dem die CI die Images baut; was sich geändert hat und was beim Update zu beachten ist, steht im [CHANGELOG](CHANGELOG.md).
 
 ## Sicherheit
 

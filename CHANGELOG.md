@@ -6,83 +6,79 @@ Alle nennenswerten Änderungen an Kibo stehen in dieser Datei. Das Format folgt
 Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
 `ghcr.io/florivdg/kibo-migrate:X.Y.Z`.
 
-## v1.2.1
+Bis 1.2.1 entstand Kibo in einem privaten Repository; die Einträge bis dahin
+verweisen deshalb auf keine Commits.
 
-[compare changes](https://github.com/florivdg/kibo/compare/v1.2.0...v1.2.1)
+## 1.2.1 – 2026-10-13
 
-### 🚀 Enhancements
+### Geändert
 
-- **marketing:** New author photo; the author's links and the repository link open in a new tab ([f6bcf33](https://github.com/florivdg/kibo/commit/f6bcf33), [0afff33](https://github.com/florivdg/kibo/commit/0afff33))
+- **Startseite:** neues Foto im Abschnitt über den Autor; seine Links und der
+  Link zum Repository öffnen sich in einem neuen Tab.
 
-### 🩹 Fixes
+### Behoben
 
-- **icons:** favicon.ico with the Kibo logo mark instead of Astro's ([62a5a20](https://github.com/florivdg/kibo/commit/62a5a20))
+- Die `favicon.ico` zeigt das Kibo-Logo statt des Astro-Logos.
 
 ### Hinweise zum Update
 
 - Keine Migration und keine neuen Variablen.
 
-### ❤️ Contributors
+## 1.2.0 – 2026-10-13
 
-- Florian van der Galiën <hallo@flori.dev>
+### Hinzugefügt
 
-## v1.2.0
+- **Ein Link pro Kita:** Jede Kita hat einen Kita-Link `/k/…/`, der alle ihre
+  Bretter zeigt, und kommt einmal als App auf den Home-Bildschirm; das
+  App-Icon zählt ungesehene Zettel.
+- **Einladungen und Rollen:** Die Inhaberin oder der Inhaber einer Kita lädt
+  weitere Admins per E-Mail ein.
+- **Registrierung steuern:** `SIGNUP_MODE` schließt die Registrierung,
+  `SIGNUP_EMAIL_DOMAINS` beschränkt sie auf bestimmte Domains.
+- **Passkeys:** Anmeldung mit Passkey, mit Vorschlag im E-Mail-Feld der
+  Anmeldeseite.
+- **Zettel melden:** Eltern melden Zettel ohne Konto, die Kita bearbeitet die
+  Meldungen unter `/admin/reports`. Rechtswidrige Inhalte lassen sich
+  zusätzlich an den Betreiber melden (DSA Art. 16); er nimmt Zettel mit
+  `remove-note` ab.
+- **Datenexport:** Jede Kita lädt ihre Bretter und aktuellen Zettel als
+  JSON-Datei herunter, für einen Anbieterwechsel oder die Rückgabe der Daten.
+- **Betreiberangaben und Datenschutzhinweise** im Fuß jeder E-Mail
+  (`OPERATOR_*`).
+- **Hilfe im Admin-Bereich:** Der Link „Hilfe“ führt zur Dokumentation oder
+  zu `DOCS_URL`; die Dokumentation ist auf einzelne Seiten unter
+  `docs/fuer-kitas/` und `docs/selbst-hosten/` aufgeteilt.
+- **Quelltext-Link:** Am Fuß jeder Seite stehen der Link zum Quelltext und die
+  laufende Version (AGPL § 13, `SOURCE_URL`).
+- **Spam-Schutz:** Budgets auch je IPv6-/56- und /48-Netz, ein Budget je Kita
+  für neue Zettel und ein Formular-Token beim Anpinnen.
+- **Lasttests:** eine begrenzte, nur lesende k6-Suite mit eigenen Images.
+- **Gehosteter Modus** (`HOSTED=true`, der Betrieb des Projekts selbst): Abo
+  mit Testphase, Pausierung und Löschung, versionierte AGB und AV-Vertrag,
+  die Startseite des Dienstes und eine Besucherzählung der Startseite auf dem
+  Server.
 
-[compare changes](https://github.com/florivdg/kibo/compare/v1.1.1...v1.2.0)
+### Geändert
 
-### 🚀 Enhancements
+- **Bretter:** eine kompakte App-Leiste statt des hohen Kopfbereichs.
+- **Startseite:** Kibo als Pinnwand für Kita-Eltern.
+- **Datenschutz:** Benachrichtigungen ohne Brett-ID im `Topic`, ein Gerät
+  meldet sich selbst ab, wenn es keinem Brett mehr folgt; Browser-Speicher
+  wird erst beschrieben, wenn es etwas zu behalten gibt; ungenutzte
+  Benachrichtigungs-Abos, abgelaufene Anmelde-Daten und Zähler werden
+  regelmäßig gelöscht.
+- **Vorlagen:** Impressum (Rechtsform, Wirtschafts-ID, DSA-Kontaktstelle) und
+  Datenschutzerklärung passen zum Code.
+- **Betrieb:** Antworten werden am Proxy komprimiert, das Video-Vorschaubild
+  ist WebP; eine zweite Domain lässt sich weiterleiten
+  (`deploy/compose.redirect.yml`).
+- Abhängigkeiten aktualisiert; die CI läuft auf Ubuntu 26.04.
 
-- **auth:** Control who may sign up (SIGNUP_MODE, SIGNUP_EMAIL_DOMAINS) ([1610ec4](https://github.com/florivdg/kibo/commit/1610ec4))
-- **auth:** Invitations and roles, several admins per Kita ([77276c1](https://github.com/florivdg/kibo/commit/77276c1))
-- **docs:** Documentation under /docs, served from the docs folder ([c5abb05](https://github.com/florivdg/kibo/commit/c5abb05))
-- **hosted:** Subscriptions, computed state and pausing ([d5d8273](https://github.com/florivdg/kibo/commit/d5d8273))
-- **hosted:** Terms, subscription page, reminders and deletion ([3073033](https://github.com/florivdg/kibo/commit/3073033))
-- **home:** The start page of the hosted service, with author section and narrated 30 s film ([abd6340](https://github.com/florivdg/kibo/commit/abd6340), [77a913b](https://github.com/florivdg/kibo/commit/77a913b), [006af05](https://github.com/florivdg/kibo/commit/006af05))
-- **analytics:** Count start-page views server-side with Plausible, no script in the browser ([e910809](https://github.com/florivdg/kibo/commit/e910809))
-- **home:** Position Kibo as the pinboard for Kita parents ([7938252](https://github.com/florivdg/kibo/commit/7938252))
-- **home:** Optional Plausible page views on the hosted start page ([d7329b1](https://github.com/florivdg/kibo/commit/d7329b1))
-- **mail:** Operator details and privacy notes in system mails ([4c652de](https://github.com/florivdg/kibo/commit/4c652de))
-- **reports:** Parents report notes, Kitas handle them under /admin/reports ([16c579e](https://github.com/florivdg/kibo/commit/16c579e))
-- **kita-link:** One link and one home-screen app per Kita ([77af631](https://github.com/florivdg/kibo/commit/77af631))
-- **push:** App icon badge for unseen notes in the Kita app ([db64718](https://github.com/florivdg/kibo/commit/db64718))
-- **spam:** IPv6 /56 and /48 budgets, Kita note budget, form token ([249c1bf](https://github.com/florivdg/kibo/commit/249c1bf))
-- **board:** Compact app bar instead of the tall board header ([d507bef](https://github.com/florivdg/kibo/commit/d507bef))
-- **auth:** Sign in with passkeys, with autofill on the login page ([4b4b142](https://github.com/florivdg/kibo/commit/4b4b142))
-- **analytics:** Count start-page views server-side, drop the Plausible script ([e910809](https://github.com/florivdg/kibo/commit/e910809))
-- **export:** Kita data export for switching and the return of data ([b63f8dd](https://github.com/florivdg/kibo/commit/b63f8dd))
-- **kita:** Name the Kita as responsible on its boards; Leitweg-ID on invoices ([fe5de20](https://github.com/florivdg/kibo/commit/fe5de20))
-- **hosted:** Versioned AGB and AVV with a confirmation mail ([0ebb436](https://github.com/florivdg/kibo/commit/0ebb436))
-- **reports:** Let anyone report illegal content to the operator (DSA Art. 16) ([2fd53d9](https://github.com/florivdg/kibo/commit/2fd53d9))
-- **privacy:** Push topic per subscriber, browser unsubscribe, storage and retention ([8b198ca](https://github.com/florivdg/kibo/commit/8b198ca))
-- **legal:** AGB template with Data Act switching and DSA rules; deletion hold for operators ([8a0f779](https://github.com/florivdg/kibo/commit/8a0f779))
-- **load:** Add bounded k6 read-only performance suite ([#77](https://github.com/florivdg/kibo/pull/77))
-- **hosted:** Say before payment that leaving early refunds nothing ([e6e1528](https://github.com/florivdg/kibo/commit/e6e1528))
-- **marketing:** Show the narrated 30 s film on the hosted start page ([006af05](https://github.com/florivdg/kibo/commit/006af05))
+### Behoben
 
-### 🔥 Performance
-
-- Compress responses at the proxy, WebP video poster ([c0ea711](https://github.com/florivdg/kibo/commit/c0ea711))
-
-### 🩹 Fixes
-
-- **a11y:** Accessibility fixes for the board pages and the admin area, focus kept when a note is removed ([bb7e71c](https://github.com/florivdg/kibo/commit/bb7e71c), [ca6e6ba](https://github.com/florivdg/kibo/commit/ca6e6ba))
-
-### 📖 Documentation
-
-- **legal:** Impressum template with legal form, Wirtschafts-ID and DSA contact point ([812cdde](https://github.com/florivdg/kibo/commit/812cdde))
-- **legal:** AVV template following the Art. 28 SCC, with church and municipal annex ([677e97f](https://github.com/florivdg/kibo/commit/677e97f))
-- **legal:** Privacy notice template matching the code, with roles and Art. 21 section ([80331b0](https://github.com/florivdg/kibo/commit/80331b0))
-- **deploy:** Redirect a second domain, check the operator docs for launch ([ab925d6](https://github.com/florivdg/kibo/commit/ab925d6))
-
-### 🏡 Chore
-
-- Upgrade dependencies and fix transitive esbuild audit finding ([0d5023e](https://github.com/florivdg/kibo/commit/0d5023e))
-- Update http-cache-semantics to clear its audit finding ([a8e0118](https://github.com/florivdg/kibo/commit/a8e0118))
-- Update source-map-js to version 1.2.2 ([e576d16](https://github.com/florivdg/kibo/commit/e576d16))
-
-### 🤖 CI
-
-- Run on Ubuntu 26.04 ([83dee68](https://github.com/florivdg/kibo/commit/83dee68))
+- Barrierefreiheit auf den Brettern und im Admin-Bereich; der Fokus bleibt
+  erhalten, wenn ein Zettel abgenommen wird.
+- Befunde von `bun audit` in esbuild, http-cache-semantics und source-map-js.
 
 ### Hinweise zum Update
 
@@ -90,13 +86,7 @@ Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
   der Kita-Link statt der Brett-Links und alles Weitere:
   [Update auf 1.2.0](docs/selbst-hosten/updates.md#update-auf-120).
 
-### ❤️ Contributors
-
-- Florian van der Galiën <hallo@flori.dev>
-
-## [1.1.1] – 2026-09-29
-
-[Alle Änderungen](https://github.com/florivdg/kibo/compare/v1.1.0...v1.1.1)
+## 1.1.1 – 2026-09-29
 
 ### Geändert
 
@@ -122,9 +112,7 @@ Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
 - Keine Migration und keine neuen Variablen; nur Startseite, Video und
   Infoblatt ändern sich.
 
-## [1.1.0] – 2026-09-29
-
-[Alle Änderungen](https://github.com/florivdg/kibo/compare/v1.0.1...v1.1.0)
+## 1.1.0 – 2026-09-29
 
 ### Hinzugefügt
 
@@ -169,7 +157,7 @@ Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
 - Die eigene Datenschutzerklärung um den Abschnitt „Benachrichtigungen“
   ergänzen, bevor die Funktion eingeschaltet wird.
 
-## [1.0.1] – 2026-09-29
+## 1.0.1 – 2026-09-29
 
 ### Hinzugefügt
 
@@ -192,7 +180,7 @@ Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
   `BETTER_AUTH_URL`; die Variable muss wie bisher die öffentliche Adresse der
   Instanz sein.
 
-## [1.0.0] – 2026-09-29
+## 1.0.0 – 2026-09-29
 
 Die erste stabile Version. Kibo ist ein digitales schwarzes Brett für Kitas:
 Die Kita-Leitung legt Bretter an und teilt sie über einen nicht erratbaren
@@ -301,8 +289,3 @@ einem Reverse Proxy, eine Instanz pro Träger oder Kita.
 - Migration `0004` (neuer Index) läuft wie gewohnt über das Migrations-Image.
 - Neue Pflichtprüfungen beim Start und neue Header: vor dem Update
   [docs/deployment.md](docs/deployment.md) lesen, insbesondere Abschnitt 10.
-
-[1.1.1]: https://github.com/florivdg/kibo/releases/tag/v1.1.1
-[1.1.0]: https://github.com/florivdg/kibo/releases/tag/v1.1.0
-[1.0.1]: https://github.com/florivdg/kibo/releases/tag/v1.0.1
-[1.0.0]: https://github.com/florivdg/kibo/releases/tag/v1.0.0
