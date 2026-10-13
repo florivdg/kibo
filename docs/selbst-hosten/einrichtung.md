@@ -34,7 +34,7 @@ keiner URL, dort passt base64.
   ([Sicherheit](./sicherheit.md#sitzungen-und-kitas)).
 - `DATABASE_URL=postgresql://kibo:…@postgres:5432/kibo` – Host ist der
   Servicename `postgres`, nicht `localhost`.
-- `KIBO_IMAGE_TAG` – steht in der Vorlage auf einer festen Version (`1.2.1`).
+- `KIBO_IMAGE_TAG` – steht in der Vorlage auf einer festen Version (`1.2.2`).
   Für ein Update die neue Version eintragen ([Updates](./updates.md)).
 
 Alle weiteren Variablen stehen unter [Konfiguration](./konfiguration.md).
