@@ -1,0 +1,30 @@
+---
+import { sourceLink } from '@/lib/instance'
+import { legalFooterLinks } from '@/lib/legal'
+
+// Imprint and privacy policy have to be reachable from every page a visitor or
+// an admin can land on — boards, login, sign-up and the admin area. The
+// hosted instance adds its terms and its data processing agreement.
+//
+// Kibo is AGPL, so every instance says where its source is and which version
+// it runs: the repository, or SOURCE_URL for whoever runs a changed version
+// (§ 13). The version is no link — a build from main has no tag to point at.
+const links = [
+  ...legalFooterLinks(),
+  { href: sourceLink.href, label: 'Quelltext' },
+]
+
+// The version is not faded further than the footer: it would drop to 3:1.
+---
+
+<nav
+  aria-label="Rechtliches"
+  class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2"
+>
+  {links.map(({ href, label }) => (
+    <a class="underline underline-offset-4 hover:no-underline" href={href}>
+      {label}
+    </a>
+  ))}
+  <span>v{sourceLink.version}</span>
+</nav>

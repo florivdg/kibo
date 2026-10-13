@@ -1,0 +1,53 @@
+# Beispielkonfiguration für einen neuen Traefik. Wer bereits einen Traefik
+# betreibt, braucht diese Datei nicht – dort genügt das Netzwerk `proxy` und
+# ein Entrypoint mit Zertifikatsauflöser (Namen in deploy/.env eintragen).
+
+entryPoints:
+  web:
+    address: ':80'
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ':443'
+    http:
+      tls:
+        certResolver: letsencrypt
+    # Ohne trustedIPs verwirft Traefik eingehende X-Forwarded-*-Header der
+    # Clients und setzt sie selbst. Nur ändern, wenn davor ein eigener
+    # Loadbalancer oder ein CDN steht – dann dessen IPs eintragen.
+    # forwardedHeaders:
+    #   trustedIPs:
+    #     - 203.0.113.10/32
+
+providers:
+  docker:
+    # Nur Container mit traefik.enable=true werden veröffentlicht
+    exposedByDefault: false
+    network: proxy
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      # PFLICHT: vor dem ersten Start die eigene Adresse eintragen. Adressen
+      # unter example.org lehnt Let's Encrypt ab – dann gibt es kein
+      # Zertifikat, und Traefik liefert nur sein Standardzertifikat aus.
+      email: admin@example.org
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
+
+# Datensparsam: keine Zugriffs-Logs mit Client-IPs, nur Betriebsmeldungen
+log:
+  level: INFO
+
+api:
+  dashboard: false
+
+# Prometheus, Tracing und Telemetrie bleiben aus
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false

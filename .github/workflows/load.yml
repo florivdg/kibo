@@ -1,0 +1,62 @@
+name: Read-only load test
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [staging, production]
+        required: true
+      profile:
+        type: choice
+        options: [smoke, baseline, production]
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: load-${{ inputs.environment }}
+  cancel-in-progress: false
+jobs:
+  load:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - name: Install pinned k6
+        run: |
+          curl --fail --silent --show-error --location https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-linux-amd64.tar.gz -o /tmp/k6.tar.gz
+          tar -xzf /tmp/k6.tar.gz -C /tmp
+          sudo install /tmp/k6-v2.3.0-linux-amd64/k6 /usr/local/bin/k6
+      - name: Run authorized profile
+        env:
+          LOAD_ENVIRONMENT: ${{ inputs.environment }}
+          LOAD_PROFILE: ${{ inputs.profile }}
+          LOAD_ORIGIN: ${{ secrets.LOAD_ORIGIN }}
+          LOAD_MANIFEST_JSON: ${{ secrets.LOAD_MANIFEST_JSON }}
+          LOAD_RUN_AUTHORIZATION: ${{ secrets.LOAD_RUN_AUTHORIZATION }}
+          LOAD_COMMIT: ${{ vars.LOAD_COMMIT }}
+          LOAD_IMAGE: ${{ vars.LOAD_IMAGE }}
+          LOAD_INFRASTRUCTURE: ${{ vars.LOAD_INFRASTRUCTURE }}
+        run: |
+          mkdir -m 700 .load-private
+          printf '%s' "$LOAD_MANIFEST_JSON" > .load-private/fixtures.json
+          chmod 600 .load-private/fixtures.json
+          unset LOAD_MANIFEST_JSON
+          LOAD_MANIFEST=.load-private/fixtures.json bun run load:run
+      - name: Upload sanitized aggregates only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: load-${{ inputs.environment }}-${{ github.run_id }}
+          path: |
+            load-results/summary.json
+            load-results/provenance.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Remove capabilities
+        if: always()
+        run: rm -rf .load-private

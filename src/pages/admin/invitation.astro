@@ -1,0 +1,103 @@
+---
+import CardHeading from '@/components/admin/CardHeading.vue'
+import AcceptInvitation from '@/components/auth/AcceptInvitation.vue'
+import SignOutLink from '@/components/auth/SignOutLink.vue'
+import { buttonVariants } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from '@/components/ui/card'
+import AuthLayout from '@/layouts/Auth.astro'
+import { loginUrl } from '@/lib/admin-redirect'
+import { authErrorMessage } from '@/lib/auth-errors'
+import { INVITATION_ID_PARAM, INVITATION_PARAM } from '@/lib/auth-paths'
+import { invitationView } from '@/lib/invitation-view'
+
+// Where the link of an invitation mail leads. The middleware renders this page
+// with and without a session, and the link grants none: whoever opens it signs
+// in (or signs up and confirms their address) like everyone else, and only
+// then answers the invitation.
+const signedIn = !!Astro.locals.user
+const view = await invitationView(
+  Astro.url.searchParams.get(INVITATION_ID_PARAM),
+  signedIn,
+  Astro.request.headers,
+)
+
+// Back here after signing in
+const login = loginUrl(Astro.url)
+---
+
+<AuthLayout title="Einladung">
+  {view.state === 'recipient' && (
+    <AcceptInvitation
+      client:load
+      invitationId={view.id}
+      organizationName={view.organizationName}
+      inviterName={view.inviterName}
+    />
+  )}
+  {view.state === 'wrong-account' && (
+    <Card>
+      <CardHeader>
+        <CardHeading level={1}>Einladung für ein anderes Konto</CardHeading>
+        <CardDescription>
+          {authErrorMessage({
+            code: 'YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION',
+          })}
+        </CardDescription>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <SignOutLink client:load href={login} class={buttonVariants()}>
+          Abmelden und mit anderem Konto anmelden
+        </SignOutLink>
+        <a href="/admin" class={buttonVariants({ variant: 'outline' })}>
+          Zurück zum Admin-Bereich
+        </a>
+      </CardContent>
+    </Card>
+  )}
+  {view.state === 'guest' && (
+    <Card>
+      <CardHeader>
+        <CardHeading level={1}>
+          Einladung zur Kita „{view.organizationName}“
+        </CardHeading>
+        <CardDescription>
+          Sie wurden eingeladen, die Kita „{view.organizationName}“ bei Kibo
+          mitzuverwalten. Melden Sie sich an oder legen Sie ein Konto an – mit
+          der E-Mail-Adresse, an die die Einladung ging.
+        </CardDescription>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <a href={login} class={buttonVariants()}>
+          Anmelden
+        </a>
+        <a
+          href={`/admin/signup?${INVITATION_PARAM}=${encodeURIComponent(view.id)}`}
+          class={buttonVariants({ variant: 'outline' })}
+        >
+          Konto anlegen
+        </a>
+      </CardContent>
+    </Card>
+  )}
+  {view.state === 'gone' && (
+    <Card>
+      <CardHeader>
+        <CardHeading level={1}>Einladung nicht mehr gültig</CardHeading>
+        <CardDescription>
+          {authErrorMessage({ code: 'INVITATION_NOT_FOUND' })} Bitten Sie die
+          Kita um eine neue Einladung.
+        </CardDescription>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <a href={signedIn ? '/admin' : '/admin/login'} class={buttonVariants()}>
+          {signedIn ? 'Zum Admin-Bereich' : 'Zur Anmeldung'}
+        </a>
+      </CardContent>
+    </Card>
+  )}
+</AuthLayout>

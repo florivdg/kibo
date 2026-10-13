@@ -1,0 +1,64 @@
+---
+import { Font } from 'astro:assets'
+import { BETTER_AUTH_URL } from 'astro:env/server'
+
+import { PAPER_COLOR } from '@/lib/board/manifest'
+
+interface Props {
+  title: string
+  description?: string
+  /** Kitas and their boards are shared by link only: keep them out of search
+   *  engines and don't leak the link to other sites */
+  unlisted?: boolean
+  /** Path of the page's canonical address, for pages meant to be found */
+  canonical?: string
+  /** Web app manifest of the page (its Kita's, for the home screen) */
+  manifest?: string
+}
+
+const { title, description, unlisted, canonical, manifest } = Astro.props
+
+// Absolute addresses come from the configured public origin, never from the
+// request's Host header, which a client can choose freely
+const absolute = (path: string) => new URL(path, BETTER_AUTH_URL).href
+const canonicalUrl = canonical && absolute(canonical)
+const ogImage = absolute('/og-image.jpg')
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+{unlisted && (
+  <>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+  </>
+)}
+{description && <meta name="description" content={description} />}
+<meta name="theme-color" content={PAPER_COLOR} />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" type="image/svg+xml" href="/logo-mark.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+{manifest && <link rel="manifest" href={manifest} />}
+{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+{!unlisted && (
+  <>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kibo" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Kibo-Logo auf einer Filzwand: Die digitale Pinnwand für eure Kita-Eltern."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+  </>
+)}
+<Font cssVariable="--font-playwrite" preload />
+<Font cssVariable="--font-atkinson" preload />
+<title>{title}</title>

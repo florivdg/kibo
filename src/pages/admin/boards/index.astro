@@ -1,0 +1,129 @@
+---
+import { Plus } from '@lucide/vue'
+
+import CopyLinkButton from '@/components/admin/boards/CopyLinkButton.vue'
+import KitaLinkCard from '@/components/admin/boards/KitaLinkCard.vue'
+import { buttonVariants } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import AdminLayout from '@/layouts/Admin.astro'
+import { BOARD_TYPES } from '@/lib/board/board-types'
+import { kitaLinkOf } from '@/lib/board/kita-link'
+import { listBoards } from '@/lib/board/queries'
+import { kitaBoardUrl, kitaUrl } from '@/lib/board/secrets'
+import { pushConfigured } from '@/lib/push/config'
+
+// The middleware guarantees an active Kita on admin pages
+const organizationId = Astro.locals.organizationId!
+const [boards, { token: kitaToken, name: kitaName }] = await Promise.all([
+  listBoards(organizationId, new Date()),
+  kitaLinkOf(organizationId),
+])
+// A Kita the hosted instance has paused takes no new boards
+const paused = Astro.locals.kitaPaused
+// Without VAPID keys nothing on the page speaks of notifications
+const push = pushConfigured()
+---
+
+<AdminLayout title="Bretter" breadcrumbs={[{ label: 'Bretter' }]}>
+  <div class="space-y-6">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight">Bretter</h1>
+        <p class="mt-1 text-muted-foreground">
+          Ein Link für die ganze Kita: Darüber sehen Eltern alle Bretter und
+          pinnen Zettel an.
+        </p>
+      </div>
+      <!-- asChild can't reach into Astro slot content, so style the link -->
+      {!paused && (
+        <a href="/admin/boards/new" class={buttonVariants()}>
+          <Plus /> Brett anlegen
+        </a>
+      )}
+    </div>
+
+    <KitaLinkCard
+      client:load
+      url={kitaUrl(kitaToken)}
+      kitaName={kitaName}
+      push={push}
+      paused={paused}
+    />
+
+    {boards.length ? (
+      <Table>
+        <TableCaption class="sr-only">Bretter der Kita</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead class="hidden sm:table-cell">Art</TableHead>
+            <TableHead class="text-right">Zettel</TableHead>
+            {push && (
+              <TableHead
+                class="hidden text-right sm:table-cell"
+                title="Geräte, die bei neuen Zetteln benachrichtigt werden"
+              >
+                Benachrichtigt
+              </TableHead>
+            )}
+            <TableHead class="w-0">
+              <span class="sr-only">Link</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {boards.map((board) => (
+            <TableRow>
+              <TableCell class="font-medium">
+                <a
+                  href={`/admin/boards/${board.id}`}
+                  class="underline-offset-4 hover:underline"
+                >
+                  {board.name}
+                </a>
+              </TableCell>
+              <TableCell class="hidden text-muted-foreground sm:table-cell">
+                {BOARD_TYPES[board.type].label}
+              </TableCell>
+              <TableCell class="text-right tabular-nums">
+                {board.noteCount}
+              </TableCell>
+              {push && (
+                <TableCell class="hidden text-right tabular-nums sm:table-cell">
+                  {board.pushEnabled ? (
+                    board.subscriberCount
+                  ) : (
+                    <span class="text-muted-foreground">aus</span>
+                  )}
+                </TableCell>
+              )}
+              <TableCell>
+                <CopyLinkButton
+                  client:load
+                  url={kitaBoardUrl(kitaToken, board.id)}
+                  name={board.name}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    ) : (
+      <div class="rounded-xl border border-dashed p-10 text-center">
+        <p class="font-medium">Noch keine Bretter</p>
+        <p class="mt-1 text-sm text-muted-foreground">
+          Legen Sie zum Beispiel eine Fundkiste an und teilen Sie den Kita-Link
+          mit den Eltern.
+        </p>
+      </div>
+    )}
+  </div>
+</AdminLayout>

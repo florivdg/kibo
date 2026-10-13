@@ -1,0 +1,1 @@
+CREATE INDEX "spam_fingerprint_noteId_idx" ON "spam_fingerprint" USING btree ("note_id");

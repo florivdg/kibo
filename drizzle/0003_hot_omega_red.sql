@@ -1,0 +1,2 @@
+ALTER TABLE "spam_fingerprint" ADD COLUMN "note_id" text;--> statement-breakpoint
+ALTER TABLE "spam_fingerprint" ADD CONSTRAINT "spam_fingerprint_note_id_note_id_fk" FOREIGN KEY ("note_id") REFERENCES "public"."note"("id") ON DELETE cascade ON UPDATE no action;

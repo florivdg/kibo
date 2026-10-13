@@ -1,0 +1,87 @@
+---
+import InvoiceRequestForm from '@/components/admin/subscription/InvoiceRequestForm.vue'
+import PriceCard from '@/components/admin/subscription/PriceCard.astro'
+import StatusCard from '@/components/admin/subscription/StatusCard.astro'
+import StepsCard from '@/components/admin/subscription/StepsCard.astro'
+import NotFound from '@/components/NotFound.astro'
+import AdminLayout from '@/layouts/Admin.astro'
+import { subscriptionPageView } from '@/lib/hosted/subscription-page'
+import { hostedPriceNote, instanceMode } from '@/lib/instance'
+import { termsLinks } from '@/lib/legal'
+
+// The subscription of the hosted instance: where it stands, what it costs
+// and how to pay for it (src/lib/hosted/subscription-page.ts). The page
+// belongs to the account, not to a Kita — it renders without an active one,
+// and also while the Kitas are paused.
+//
+// Without HOSTED there is no subscription and no page: it answers exactly
+// like an address that doesn't exist, reason phrase included.
+//
+// The middleware only renders this page with a session
+const user = Astro.locals.user!
+const view = instanceMode.hosted
+  ? await subscriptionPageView(user.id, Astro.locals.kitaOwner, new Date())
+  : undefined
+
+if (!view) {
+  Astro.response.status = 404
+  Astro.response.statusText = 'Not Found'
+}
+
+// An account without a Kita and without a subscription has no status yet
+const summary = view && view.role !== 'none' ? view.summary : undefined
+
+// Only the owner of the subscription sees what it costs, and — unless the
+// account is free for good — how to pay for it
+const owner = view?.role === 'owner' ? view : undefined
+const billed = owner?.billed ? owner : undefined
+
+// The account agrees to the current terms with the request when it has not
+const terms = billed?.termsRequired ? termsLinks() : undefined
+
+// The notice above every admin page would say what the status card says. It
+// only stays for an owner who is a guest in the active Kita: there it is
+// about somebody else's subscription.
+const guest =
+  owner !== undefined && Astro.locals.subscriptionNotice?.isOwner === false
+---
+
+{view ? (
+  <AdminLayout
+    title="Abo"
+    breadcrumbs={[{ label: 'Abo' }]}
+    hostedNotice={guest}
+  >
+    <div class="space-y-6">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight">Abo</h1>
+        <p class="mt-1 text-muted-foreground">
+          Testphase, Jahresabo und Rechnung für Ihr Konto.
+        </p>
+      </div>
+      <StatusCard summary={summary} invited={view.role === 'admin'} />
+      {owner && (
+        <PriceCard
+          kitas={owner.kitas}
+          price={owner.price}
+          billed={owner.billed}
+          note={hostedPriceNote.text}
+        />
+      )}
+      {billed && (
+        <>
+          <StepsCard requested={billed.invoiceRequest} />
+          <InvoiceRequestForm
+            client:load
+            {...billed.billing}
+            requested={billed.invoiceRequest !== undefined}
+            period={billed.period}
+            terms={terms}
+          />
+        </>
+      )}
+    </div>
+  </AdminLayout>
+) : (
+  <NotFound />
+)}

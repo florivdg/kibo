@@ -1,0 +1,29 @@
+---
+import { cardBodyClass, cardTitleClass } from '@/components/marketing/classes'
+import Section from '@/components/marketing/Section.astro'
+import type { Step } from '@/lib/marketing/hosted-page'
+
+// From the sign-up to the paid year, as numbered notes in a row
+interface Props {
+  steps: Step[]
+}
+
+const { steps } = Astro.props
+
+// One sheet of paper per step, in the colours of the notes above
+const papers = ['bg-sonne', 'bg-gras', 'bg-rosa', 'bg-flieder', 'bg-white/80']
+---
+
+<Section id="ablauf" title="So funktioniert es">
+  <ol class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+    {steps.map((step, index) => (
+      <li class:list={['note-paper px-5 py-5', papers[index % papers.length]]}>
+        <p aria-hidden="true" class="font-display text-2xl leading-normal">
+          {index + 1}
+        </p>
+        <h3 class:list={['mt-1', cardTitleClass]}>{step.title}</h3>
+        <p class={cardBodyClass}>{step.body}</p>
+      </li>
+    ))}
+  </ol>
+</Section>

@@ -1,0 +1,12 @@
+---
+import ErrorPage from '@/components/ErrorPage.astro'
+
+// What an address that leads nowhere answers with. Its own component, so a
+// page that exists only on some instances (/docs) can answer exactly like an
+// address that exists on none.
+---
+
+<ErrorPage title="Seite nicht gefunden" heading="Nichts gefunden.">
+  Diese Seite gibt es nicht. Vielleicht ist der Link unvollständig. Den Link zum
+  Brett Ihrer Kita bekommen Sie bei der Kita.
+</ErrorPage>

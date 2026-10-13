@@ -1,0 +1,52 @@
+---
+import ChangeEmailSettings from '@/components/admin/ChangeEmailSettings.vue'
+import ChangePasswordSettings from '@/components/admin/ChangePasswordSettings.vue'
+import DeleteAccountSettings from '@/components/admin/DeleteAccountSettings.vue'
+import PasskeySettings from '@/components/admin/PasskeySettings.vue'
+import TwoFactorSettings from '@/components/admin/TwoFactorSettings.vue'
+import AdminLayout from '@/layouts/Admin.astro'
+import { EMAIL_CHANGE_MARKER } from '@/lib/auth-paths'
+import { ownedOrganizations } from '@/lib/organization-access'
+import { listPasskeysOf } from '@/lib/passkeys/queries'
+
+// The middleware only renders this page with a session
+const user = Astro.locals.user!
+const [owned, passkeys] = await Promise.all([
+  ownedOrganizations(user.id),
+  listPasskeysOf(user.id),
+])
+
+// Both links of an address change lead back here: the first to
+// EMAIL_CHANGE_CALLBACK, the last to EMAIL_CHANGE_DONE_CALLBACK
+const emailLinkMarker = Astro.url.searchParams.get(EMAIL_CHANGE_MARKER)
+const emailLinkStep =
+  emailLinkMarker === null
+    ? null
+    : emailLinkMarker === 'done'
+      ? 'done'
+      : 'approved'
+const emailLinkError = Astro.url.searchParams.get('error')
+---
+
+<AdminLayout title="Konto" breadcrumbs={[{ label: 'Konto' }]}>
+  <!-- Gap, not space-y: the cards are islands, and <astro-island> has
+       display: contents, so a margin on it goes nowhere -->
+  <div class="flex flex-col gap-6">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Konto</h1>
+      <p class="mt-1 text-muted-foreground">
+        Anmeldedaten und Sicherheitseinstellungen für Ihr Konto.
+      </p>
+    </div>
+    <ChangeEmailSettings
+      client:load
+      currentEmail={user.email}
+      linkError={emailLinkError}
+      linkStep={emailLinkStep}
+    />
+    <ChangePasswordSettings client:load />
+    <TwoFactorSettings client:load enabled={user.twoFactorEnabled ?? false} />
+    <PasskeySettings client:load passkeys={passkeys} />
+    <DeleteAccountSettings client:load ownedOrganizations={owned} />
+  </div>
+</AdminLayout>

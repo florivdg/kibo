@@ -1,0 +1,59 @@
+---
+import CardHeading from '@/components/admin/CardHeading.vue'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from '@/components/ui/card'
+import { dateAndTime } from '@/lib/board/time'
+import { reportReasonLabel, type ReportReason } from '@/lib/reports/types'
+
+// The reports of a case, oldest first, on the page of the case
+// (src/pages/admin/reports/[id].astro). A case keeps only so many with their
+// details; the rest are counted.
+interface Props {
+  reports: {
+    id: string
+    reason: ReportReason
+    remarks: string
+    createdAt: Date
+  }[]
+  reportCount: number
+}
+
+const { reports, reportCount } = Astro.props
+const unkept = reportCount - reports.length
+const more =
+  unkept === 1
+    ? 'Dazu kam eine weitere Meldung, deren Angaben nicht gespeichert wurden.'
+    : `Dazu kamen ${unkept} weitere Meldungen, deren Angaben nicht gespeichert wurden.`
+---
+
+<Card>
+  <CardHeader>
+    <CardHeading>Meldungen</CardHeading>
+    <CardDescription>
+      Eltern melden ohne Namen und ohne Konto. Gespeichert sind nur der Grund,
+      ein freiwilliger Hinweis und der Zeitpunkt.
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ol class="grid gap-4">
+      {reports.map((report) => (
+        <li class="border-l-2 pl-3">
+          <p class="font-medium">{reportReasonLabel(report.reason)}</p>
+          {report.remarks && (
+            <p class="mt-1 text-sm whitespace-pre-line wrap-anywhere">
+              {report.remarks}
+            </p>
+          )}
+          <p class="mt-1 text-xs text-muted-foreground">
+            {dateAndTime(report.createdAt)}
+          </p>
+        </li>
+      ))}
+    </ol>
+    {unkept > 0 && <p class="mt-4 text-sm text-muted-foreground">{more}</p>}
+  </CardContent>
+</Card>

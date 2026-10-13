@@ -1,0 +1,26 @@
+---
+import SignupForm from '@/components/auth/SignupForm.vue'
+import AuthLayout from '@/layouts/Auth.astro'
+import { INVITATION_PARAM } from '@/lib/auth-paths'
+import { signupPolicy } from '@/lib/instance'
+import { findPendingInvitation } from '@/lib/organization-members'
+
+// Reached from the invitation page with the id of the invitation. Whoever
+// holds that id holds the mail it came in, so the form may name the invited
+// address; nothing is ever looked up by address.
+const invitationId = Astro.url.searchParams.get(INVITATION_PARAM)
+const invitation = invitationId
+  ? await findPendingInvitation(invitationId)
+  : undefined
+
+// A closed sign-up has no page to show, except to someone who was invited:
+// the login it is
+if (!signupPolicy.open && !invitation) return Astro.redirect('/admin/login')
+---
+
+<AuthLayout title="Registrieren">
+  <SignupForm
+    client:load
+    invitation={invitation && { id: invitation.id, email: invitation.email }}
+  />
+</AuthLayout>

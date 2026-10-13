@@ -1,0 +1,43 @@
+---
+import '@/styles/frontend.css'
+
+import FrontendHead from '@/components/FrontendHead.astro'
+import LegalFooter from '@/components/LegalFooter.astro'
+import type { KitaResponsibility } from '@/lib/board/privacy-contact'
+
+// The page shell everything outside /admin shares: board, start page, imprint
+// and privacy policy
+interface Props {
+  title: string
+  description?: string
+  unlisted?: boolean
+  canonical?: string
+  manifest?: string
+  // Who answers for the boards of a Kita link's page (LegalFooter.astro)
+  responsible?: KitaResponsibility | undefined
+}
+
+const { title, description, unlisted, canonical, manifest, responsible } =
+  Astro.props
+---
+
+<html lang="de">
+  <head>
+    <FrontendHead
+      title={title}
+      description={description}
+      unlisted={unlisted}
+      canonical={canonical}
+      manifest={manifest}
+    />
+  </head>
+  <body class="bg-filz-texture flex min-h-svh flex-col font-sans text-tinte antialiased">
+    <!-- A column, so a page can push its last element down to the footer (the
+         board's pin button). Centred pages need w-full: auto margins would
+         shrink them to their content. -->
+    <div class="flex flex-1 flex-col">
+      <slot />
+    </div>
+    <LegalFooter responsible={responsible} />
+  </body>
+</html>

@@ -1,0 +1,17 @@
+---
+// One section of the hosted start page: the spacing to the one above and
+// the heading that names it, for the eye and for a screen reader alike
+interface Props {
+  id: string
+  title: string
+}
+
+const { id, title } = Astro.props
+---
+
+<section aria-labelledby={id} class="mt-20 sm:mt-28">
+  <h2 id={id} class="font-display text-2xl leading-normal sm:text-3xl">
+    {title}
+  </h2>
+  <slot />
+</section>

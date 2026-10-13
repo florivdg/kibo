@@ -1,0 +1,85 @@
+---
+import '@/styles/global.css'
+import AdminHead from '@/components/admin/AdminHead.astro'
+import AdminShell from '@/components/admin/AdminShell.vue'
+import AdminToaster from '@/components/admin/AdminToaster.vue'
+import HostedNotice from '@/components/admin/HostedNotice.astro'
+import LegalFooter from '@/components/LegalFooter.astro'
+import { SIDEBAR_COOKIE_NAME } from '@/components/ui/sidebar/utils'
+import { auth } from '@/lib/auth'
+import { docsHref, instanceMode } from '@/lib/instance'
+import { openCaseCount } from '@/lib/reports/queries'
+
+interface Props {
+  title?: string
+  breadcrumbs?: { label: string; href?: string }[]
+  // False on a page that says where the subscription stands itself
+  hostedNotice?: boolean
+}
+
+const { title, breadcrumbs, hostedNotice = true } = Astro.props
+
+// The middleware guarantees a signed-in user on admin pages
+const { user: sessionUser, session } = Astro.locals
+if (!sessionUser || !session) {
+  throw new Error('Admin layout rendered without a session')
+}
+
+const user = {
+  name: sessionUser.name,
+  email: sessionUser.email,
+  avatar: sessionUser.image ?? '',
+}
+const activeOrganizationId = session.activeOrganizationId ?? undefined
+const [memberships, openReports] = await Promise.all([
+  auth.api.listOrganizations({ headers: Astro.request.headers }),
+  // The sidebar counts the reported notes that wait for someone
+  activeOrganizationId ? openCaseCount(activeOrganizationId) : 0,
+])
+const organizations = memberships.map(({ id, name, slug, logo }) => ({
+  id,
+  name,
+  slug,
+  logo,
+}))
+
+// The hosted instance says where the subscription of the active Kita stands
+// (src/lib/hosted/notice.ts). The middleware has looked that up; there is
+// nothing to say on the account page of someone without a Kita.
+const notice = hostedNotice ? Astro.locals.subscriptionNotice : undefined
+
+// Read client-persisted UI state on the server so SSR matches hydration
+const sidebarOpen = Astro.cookies.get(SIDEBAR_COOKIE_NAME)?.value !== 'false'
+---
+
+<html lang="de" class="dark">
+  <head>
+    <AdminHead title={title} />
+  </head>
+  <body class="min-h-screen bg-background font-sans text-foreground antialiased">
+    <!-- Past the sidebar and the header to the <main> of AdminShell -->
+    <a
+      href="#inhalt"
+      class="sr-only rounded-md bg-background px-4 py-2 text-sm font-medium focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:ring-3 focus:ring-ring/50 focus:outline-none"
+    >
+      Zum Inhalt springen
+    </a>
+    <AdminShell
+      client:load
+      currentPath={Astro.url.pathname}
+      breadcrumbs={breadcrumbs}
+      sidebarOpen={sidebarOpen}
+      organizations={organizations}
+      activeOrganizationId={activeOrganizationId}
+      user={user}
+      docsHref={docsHref()}
+      hosted={instanceMode.hosted}
+      openReports={openReports}
+    >
+      {notice && <HostedNotice notice={notice} />}
+      <slot />
+      <LegalFooter slot="footer" />
+    </AdminShell>
+    <AdminToaster client:load />
+  </body>
+</html>

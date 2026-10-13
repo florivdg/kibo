@@ -1,0 +1,85 @@
+---
+import BoardApp from '@/components/board/BoardApp.vue'
+import KitaPaused from '@/components/board/KitaPaused.astro'
+import PageNotice from '@/components/board/PageNotice.astro'
+import UnknownLink from '@/components/board/UnknownLink.astro'
+import BoardLayout from '@/layouts/Board.astro'
+import { kitaManifestPath, kitaPath } from '@/lib/board/paths'
+import { findBoardPage } from '@/lib/board/queries'
+import { legalHref } from '@/lib/legal'
+import { operatorReportAddress } from '@/lib/reports/operator-notice'
+
+const now = new Date()
+const kitaToken = Astro.params.kita ?? ''
+// A board of another Kita is as unknown as one that doesn't exist, and a
+// malformed token never reaches the database
+const found = await findBoardPage(
+  { kitaToken, boardId: Astro.params.board ?? '' },
+  now,
+)
+
+// The trailing slash, and caching, indexing and referrer headers for /k,
+// come from the middleware (src/middleware.ts,
+// src/lib/server/security-headers.ts)
+//
+// - A link that leads nowhere: the one 404 page of the Kita links.
+// - A board the Kita doesn't have (any more) under a link that works: 404,
+//   and the way to its other boards. The link on the home screen is fine.
+// - Paused on the hosted instance: like the Kita page, a page of its own
+//   with 200, no notes, no form and no manifest. For a board the Kita
+//   doesn't have, the very page the Kita page shows — every board of it is
+//   paused, and whether this one exists is beside the point. Whichever page
+//   of the Kita is added to the home screen, the app is the Kita's (its
+//   manifest starts it on the Kita page).
+if (!found || found.kind === 'unknown-board') {
+  Astro.response.status = 404
+  Astro.response.statusText = 'Not Found'
+}
+---
+
+{found?.kind === 'board' ? (
+  <BoardLayout
+    title={`${found.board.name} – ${found.board.kitaName}`}
+    description={found.board.description}
+    manifest={kitaManifestPath(kitaToken)}
+    responsible={found.responsible}
+  >
+    <BoardApp
+      client:load
+      board={found.board}
+      initial={{ notes: found.notes, hasMore: found.hasMore }}
+      now={now.toISOString()}
+      privacyHref={legalHref('datenschutz')}
+      operatorEmail={operatorReportAddress()}
+    />
+  </BoardLayout>
+) : found?.kind === 'paused-board' ? (
+  <PageNotice
+    title="Brett pausiert"
+    description="Dieses Brett ist gerade pausiert."
+    heading="Dieses Brett ist pausiert."
+    responsible={found.responsible}
+  >
+    „{found.board.name}“ von {found.board.kitaName} ist gerade nicht erreichbar.
+    Die Zettel sind nicht verloren. Sprich am besten die Kita darauf an.
+  </PageNotice>
+) : found?.kind === 'paused-kita' ? (
+  <KitaPaused name={found.kita.name} responsible={found.responsible} />
+) : found?.kind === 'unknown-board' ? (
+  <PageNotice
+    title="Brett nicht gefunden"
+    description="Dieses Brett gibt es nicht (mehr)."
+    heading="Dieses Brett gibt es nicht (mehr)."
+    responsible={found.responsible}
+  >
+    Vielleicht hat die Kita es entfernt. Die anderen Bretter sind weiter da:
+    <a
+      href={kitaPath(kitaToken)}
+      class="font-semibold underline underline-offset-3"
+    >
+      Zu allen Brettern von {found.kita.name}
+    </a>
+  </PageNotice>
+) : (
+  <UnknownLink />
+)}

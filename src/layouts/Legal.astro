@@ -1,0 +1,39 @@
+---
+import NotFound from '@/components/NotFound.astro'
+import FrontendLayout from '@/layouts/Frontend.astro'
+import { legalPages, type LegalPage } from '@/lib/legal'
+
+interface Props {
+  page: LegalPage
+  // What serveLegalPage answered: the rendered Markdown — without content
+  // when the operator hasn't filled the page in —, or nothing at all for a
+  // page this instance doesn't have
+  legal: { content: string | undefined } | undefined
+  // The version of the terms or of the data processing agreement shown
+  version?: string
+}
+
+const { page, legal, version } = Astro.props
+const { title } = legalPages[page]
+---
+
+{legal ? (
+  <FrontendLayout title={`${title} – Kibo`}>
+    <main class="mx-auto w-full max-w-2xl px-4 pt-12 pb-16 sm:px-6">
+      <h1 class="font-display mb-8 text-4xl leading-[1.35]">{title}</h1>
+      {version && legal.content && (
+        <p class="text-tinte/80 -mt-6 mb-8 text-base">Fassung {version}</p>
+      )}
+      {legal.content ? (
+        <div class="markdown-prose" set:html={legal.content} />
+      ) : (
+        <p class="text-lg leading-relaxed">
+          Diese Seite wurde für diese Kibo-Instanz noch nicht hinterlegt. Bitte
+          wenden Sie sich an den Betreiber.
+        </p>
+      )}
+    </main>
+  </FrontendLayout>
+) : (
+  <NotFound />
+)}

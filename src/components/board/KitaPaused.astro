@@ -1,0 +1,25 @@
+---
+import PageNotice from '@/components/board/PageNotice.astro'
+import type { KitaResponsibility } from '@/lib/board/privacy-contact'
+
+// A Kita whose subscription on the hosted instance has run out
+// (src/lib/hosted/access.ts): what its page says, and what an address of a
+// board it doesn't have says. The page sets the 200. Who answers for the
+// boards is still said: the notes are kept, and parents may want to ask.
+interface Props {
+  name: string
+  responsible: KitaResponsibility | undefined
+}
+
+const { name, responsible } = Astro.props
+---
+
+<PageNotice
+  responsible={responsible}
+  title="Bretter pausiert"
+  description="Die Bretter dieser Kita sind gerade pausiert."
+  heading="Gerade pausiert."
+>
+  Die Bretter von {name} sind gerade nicht erreichbar. Die Zettel sind nicht
+  verloren. Sprich am besten die Kita darauf an.
+</PageNotice>

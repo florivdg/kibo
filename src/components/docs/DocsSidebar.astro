@@ -1,0 +1,58 @@
+---
+import { FOCUS_RING_TIGHT } from '@/components/docs/focus-ring'
+import { DOCS_INDEX_ID, DOCS_SECTIONS, docLink } from '@/lib/docs/navigation'
+
+// The documentation's pages, grouped into its two sections. The layout
+// renders this twice — always visible beside the text on wide screens, behind
+// a <details> on narrow ones — so it carries no layout of its own.
+interface Props {
+  // Page titles by id, read from the pages' own headings
+  titles: ReadonlyMap<string, string>
+  currentId: string
+}
+
+const { titles, currentId } = Astro.props
+
+const linkClass = `block rounded-xl px-3 py-1.5 leading-snug ${FOCUS_RING_TIGHT}`
+const link = (id: string) => ({
+  ...docLink(id, titles),
+  current: id === currentId,
+  class: [
+    linkClass,
+    id === currentId
+      ? 'bg-tinte font-semibold text-white'
+      : 'hover:bg-tinte/10',
+  ],
+})
+const overview = link(DOCS_INDEX_ID)
+---
+
+<nav aria-label="Dokumentation" class="text-base">
+  <a
+    href={overview.href}
+    class:list={overview.class}
+    aria-current={overview.current ? 'page' : undefined}
+  >
+    Übersicht
+  </a>
+  {DOCS_SECTIONS.map((section) => (
+    <>
+      <p class="text-tinte/80 mt-6 mb-1 px-3 text-sm font-bold tracking-wide uppercase">
+        {section.title}
+      </p>
+      <ul>
+        {section.ids.map(link).map((page) => (
+          <li>
+            <a
+              href={page.href}
+              class:list={page.class}
+              aria-current={page.current ? 'page' : undefined}
+            >
+              {page.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </>
+  ))}
+</nav>

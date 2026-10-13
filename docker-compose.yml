@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: kibo-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kibo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kibo_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-kibo}
+    # Only this machine: the development password is no secret
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-kibo} -d ${POSTGRES_DB:-kibo}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Lokaler Postausgang zum Ausprobieren von Registrierung und Passwort-Reset:
+  #   docker compose --profile mail up -d
+  # Posteingang unter http://localhost:8025, SMTP auf Port 1025 ohne TLS.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: kibo-mailpit
+    profiles: [mail]
+    ports:
+      - '127.0.0.1:1025:1025'
+      - '127.0.0.1:8025:8025'
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

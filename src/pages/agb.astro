@@ -1,0 +1,13 @@
+---
+import LegalLayout from '@/layouts/Legal.astro'
+import { hostedContact } from '@/lib/instance'
+import { serveLegalPage } from '@/lib/legal'
+
+// The terms of the hosted instance, served like the imprint, in the current
+// version (HOSTED_TERMS_VERSION); the earlier ones are at /agb/<version>.
+// Without HOSTED there is no such page.
+const legal = await serveLegalPage(Astro, 'agb')
+if (legal instanceof Response) return legal
+---
+
+<LegalLayout page="agb" legal={legal} version={hostedContact.termsVersion} />

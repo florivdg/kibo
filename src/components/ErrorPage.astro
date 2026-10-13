@@ -1,0 +1,27 @@
+---
+import FrontendLayout from '@/layouts/Frontend.astro'
+
+// The shell of 404.astro and 500.astro: a heading, the slot as explanation
+// and the way back to the start page
+interface Props {
+  title: string
+  heading: string
+}
+
+const { title, heading } = Astro.props
+---
+
+<FrontendLayout title={`${title} – Kibo`} unlisted>
+  <main class="mx-auto w-full max-w-xl px-4 pt-16 pb-24 sm:px-6 sm:pt-24">
+    <h1 class="font-display text-5xl leading-[1.35] sm:text-6xl">{heading}</h1>
+    <p class="text-tinte/80 mt-4 text-lg leading-relaxed">
+      <slot />
+    </p>
+    <a
+      href="/"
+      class="border-tinte/25 hover:bg-tinte/5 focus-visible:outline-tinte mt-8 inline-block rounded-full border-2 px-6 py-3 text-lg font-bold focus-visible:outline-3 focus-visible:outline-offset-3"
+    >
+      Zur Startseite
+    </a>
+  </main>
+</FrontendLayout>

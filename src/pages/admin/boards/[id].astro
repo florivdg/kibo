@@ -1,0 +1,84 @@
+---
+import BoardNotesTable from '@/components/admin/boards/BoardNotesTable.vue'
+import BoardPushCard from '@/components/admin/boards/BoardPushCard.vue'
+import BoardSettingsForm from '@/components/admin/boards/BoardSettingsForm.vue'
+import DeleteBoardCard from '@/components/admin/boards/DeleteBoardCard.vue'
+import LinkShareCard from '@/components/admin/boards/LinkShareCard.vue'
+import AdminLayout from '@/layouts/Admin.astro'
+import { BOARD_TYPES } from '@/lib/board/board-types'
+import { kitaLinkOf } from '@/lib/board/kita-link'
+import { findOrganizationBoard } from '@/lib/board/queries'
+import { kitaBoardUrl } from '@/lib/board/secrets'
+import { pushConfigured } from '@/lib/push/config'
+
+// The middleware guarantees an active Kita on admin pages
+const organizationId = Astro.locals.organizationId!
+const [found, { token: kitaToken }] = await Promise.all([
+  findOrganizationBoard(organizationId, Astro.params.id ?? '', new Date()),
+  kitaLinkOf(organizationId),
+])
+if (!found) return Astro.redirect('/admin/boards')
+
+const { board, notes, hasMore } = found
+const type = BOARD_TYPES[board.type]
+// Without VAPID keys nothing on the page speaks of notifications
+const push = pushConfigured()
+const subscriberCount = push ? found.subscriberCount : 0
+// A Kita the hosted instance has paused can't change its boards: that is
+// switched off here, and refused by the server anyway. Taking a note down
+// stays possible.
+const paused = Astro.locals.kitaPaused
+---
+
+<AdminLayout
+  title={board.name}
+  breadcrumbs={[
+    { label: 'Bretter', href: '/admin/boards' },
+    { label: board.name },
+  ]}
+>
+  <div class="grid max-w-4xl gap-6">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">{board.name}</h1>
+      <p class="mt-1 text-muted-foreground">{type.label}</p>
+    </div>
+    <!-- No renewal here: there is one link, the Kita's (/admin/boards) -->
+    <LinkShareCard
+      client:load
+      title="Link zu diesem Brett"
+      description="Führt direkt zu diesem Brett, zum Beispiel als QR-Code an der passenden Pinnwand in der Kita. Von dort kommen Eltern auch zu allen anderen Brettern der Kita. Einen neuen Link erzeugen Sie für die ganze Kita unter „Bretter“."
+      url={kitaBoardUrl(kitaToken, board.id)}
+      name={board.name}
+      openLabel="Brett öffnen"
+    />
+    <BoardNotesTable
+      client:load
+      boardId={board.id}
+      initial={{ notes, hasMore }}
+      categories={type.categories}
+    />
+    <BoardSettingsForm
+      client:load
+      boardId={board.id}
+      name={board.name}
+      description={board.description}
+      typeLabel={type.label}
+      paused={paused}
+    />
+    {push && (
+      <BoardPushCard
+        client:load
+        boardId={board.id}
+        enabled={board.pushEnabled}
+        subscriberCount={subscriberCount}
+        paused={paused}
+      />
+    )}
+    <DeleteBoardCard
+      client:load
+      boardId={board.id}
+      name={board.name}
+      paused={paused}
+    />
+  </div>
+</AdminLayout>

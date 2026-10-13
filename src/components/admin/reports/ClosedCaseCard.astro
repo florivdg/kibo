@@ -1,0 +1,43 @@
+---
+import CardHeading from '@/components/admin/CardHeading.vue'
+import { Card, CardDescription, CardHeader } from '@/components/ui/card'
+import { dateAndTime } from '@/lib/board/time'
+import type { ReportResolution } from '@/lib/reports/types'
+
+// What the team decided about a case, once it is closed
+interface Props {
+  closedAt: Date | null
+  // Missing once the account that closed it is gone
+  closedByName: string | null
+  // Taken down by the operator of the instance on a notice of illegal
+  // content (scripts/admin.ts remove-note), not by the team
+  closedByOperator: boolean
+  resolution: ReportResolution | null
+}
+
+const { closedAt, closedByName, closedByOperator, resolution } = Astro.props
+const when = closedAt
+  ? `Abgeschlossen am ${dateAndTime(closedAt)}`
+  : 'Abgeschlossen'
+const who = closedByOperator
+  ? ' vom Betreiber'
+  : closedByName
+    ? ` von ${closedByName}`
+    : ''
+// `removed` only when closing the case took the note down; a note that was
+// gone already by then is `kept`, since nobody removed it
+const what =
+  resolution === 'removed'
+    ? 'der Zettel wurde entfernt.'
+    : 'ohne den Zettel zu entfernen.'
+---
+
+<Card>
+  <CardHeader>
+    <CardHeading>Erledigt</CardHeading>
+    <CardDescription>
+      {when}
+      {who} – {what}
+    </CardDescription>
+  </CardHeader>
+</Card>

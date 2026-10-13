@@ -1,0 +1,26 @@
+---
+import BoardLayout from '@/layouts/Board.astro'
+import type { KitaResponsibility } from '@/lib/board/privacy-contact'
+
+// A page of the Kita link that has nothing to show but a sentence: a link
+// that leads nowhere (any more), or a paused Kita. Status codes are the
+// page's business.
+interface Props {
+  title: string
+  description: string
+  heading: string
+  // Under a link that works, who answers for the Kita's boards
+  responsible?: KitaResponsibility | undefined
+}
+
+const { title, description, heading, responsible } = Astro.props
+---
+
+<BoardLayout title={title} description={description} responsible={responsible}>
+  <main class="mx-auto w-full max-w-xl px-4 pt-16 pb-24 sm:px-6 sm:pt-24">
+    <h1 class="font-display text-5xl leading-[1.35] sm:text-6xl">{heading}</h1>
+    <p class="text-tinte/80 mt-4 text-lg leading-relaxed">
+      <slot />
+    </p>
+  </main>
+</BoardLayout>

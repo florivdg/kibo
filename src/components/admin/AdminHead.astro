@@ -1,0 +1,18 @@
+---
+import { Font } from 'astro:assets'
+
+interface Props {
+  title?: string
+}
+
+const { title } = Astro.props
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="generator" content={Astro.generator} />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" type="image/svg+xml" href="/logo-mark.svg" />
+<Font cssVariable="--font-inter" preload />
+<title>{title ? `${title} | Kibo Admin` : 'Kibo Admin'}</title>

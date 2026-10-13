@@ -1,0 +1,154 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Jobs that push ask for more themselves
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ${{ github.repository }}
+  # The tags all images get, once all are built (job `tag`). `latest` follows
+  # the newest version tag only (flavor latest=auto: v*.*.* without a
+  # pre-release), never a push to main; `main` and `sha-…` are the development
+  # builds.
+  IMAGE_TAGS: |
+    type=ref,event=branch
+    type=semver,pattern={{version}}
+    type=semver,pattern={{major}}.{{minor}}
+    type=sha,format=long
+
+jobs:
+  # Nothing reaches the registry before lint, types, formatting and tests are
+  # green
+  check:
+    uses: ./.github/workflows/ci.yml
+
+  # Builds app, migration and both optional load-testing images. Pushed only
+  # under the commit's own `sha-<commit>` tag: the tags operators pull are set by `tag`, after all
+  # builds have succeeded.
+  build:
+    needs: check
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: runtime
+            suffix: ''
+            cache-mode: max
+          # Two layers, nothing worth a full cache
+          - target: migrate
+            suffix: -migrate
+            cache-mode: min
+          - target: load-fixtures
+            suffix: -load-fixtures
+            cache-mode: min
+          - target: load-runner
+            suffix: -load-runner
+            cache-mode: min
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Labels (version, source, revision) as the published tags describe them
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}${{ matrix.suffix }}
+          tags: ${{ env.IMAGE_TAGS }}
+
+      # Registry names have to be lower case
+      - id: staging
+        env:
+          SUFFIX: ${{ matrix.suffix }}
+          SHA: ${{ github.sha }}
+        run: echo "tag=${REGISTRY}/${IMAGE,,}${SUFFIX}:sha-${SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          # A pull request only checks that the image builds; arm64 under
+          # emulation would take minutes for nothing
+          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.staging.outputs.tag }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Build provenance (SLSA, unsigned) and an SBOM as attestations next
+          # to the image: `docker buildx imagetools inspect <image> --format
+          # '{{ json .Provenance }}'` (or `.SBOM`) shows them
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=${{ matrix.cache-mode }},scope=${{ matrix.target }}
+
+  # All images share their tags. Publish only when every build succeeded;
+  # failed builds leave the previous tags untouched. Tags are applied one
+  # image after another, not atomically; rerunning completes a partial job.
+  tag:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}-migrate
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}-load-fixtures
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}-load-runner
+          tags: ${{ env.IMAGE_TAGS }}
+          flavor: latest=auto
+
+      # Points every tag at the manifest built above, attestations included;
+      # nothing is rebuilt
+      - name: Tag all images
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          SHA: ${{ github.sha }}
+        run: |
+          for image in "${REGISTRY}/${IMAGE,,}" "${REGISTRY}/${IMAGE,,}-migrate" "${REGISTRY}/${IMAGE,,}-load-fixtures" "${REGISTRY}/${IMAGE,,}-load-runner"; do
+            args=()
+            for tag in $TAGS; do
+              if [[ $tag == "$image:"* ]]; then args+=(--tag "$tag"); fi
+            done
+            docker buildx imagetools create "${args[@]}" "$image:sha-$SHA"
+          done

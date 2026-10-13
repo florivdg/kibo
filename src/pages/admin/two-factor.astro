@@ -1,0 +1,11 @@
+---
+import TwoFactorForm from '@/components/auth/TwoFactorForm.vue'
+import AuthLayout from '@/layouts/Auth.astro'
+import { adminRedirectTarget } from '@/lib/admin-redirect'
+
+const redirectTo = adminRedirectTarget(Astro.url.searchParams.get('redirectTo'))
+---
+
+<AuthLayout title="Bestätigung">
+  <TwoFactorForm client:load redirectTo={redirectTo} />
+</AuthLayout>

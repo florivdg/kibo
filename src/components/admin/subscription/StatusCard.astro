@@ -1,0 +1,38 @@
+---
+import CardHeading from '@/components/admin/CardHeading.vue'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from '@/components/ui/card'
+import { OWNER_TAKES_CARE } from '@/lib/hosted/messages'
+import type { StatusSummary } from '@/lib/hosted/overview'
+
+// Where the subscription stands, on top of the subscription page
+// (src/pages/admin/abo.astro). An admin somebody invited reads whose business
+// it is; an account without a subscription, that it has none.
+interface Props {
+  // Missing: the account has no subscription and no Kita of its own
+  summary?: StatusSummary
+  // The subscription shown is the one of the Kita's owner, not the reader's
+  invited?: boolean
+}
+
+const { summary, invited = false } = Astro.props
+---
+
+<Card class="max-w-xl" data-subscription-state={summary?.state ?? 'none'}>
+  <CardHeader>
+    <CardHeading>{summary?.title ?? 'Noch kein Abo'}</CardHeading>
+    <CardDescription>
+      {summary?.detail ??
+        'Zu Ihrem Konto gehört kein Abo. Die Testphase beginnt, sobald Sie Ihre erste eigene Kita anlegen.'}
+    </CardDescription>
+  </CardHeader>
+  {invited && (
+    <CardContent>
+      <p class="text-sm">{OWNER_TAKES_CARE}</p>
+    </CardContent>
+  )}
+</Card>

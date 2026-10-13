@@ -1,0 +1,13 @@
+---
+import LegalLayout from '@/layouts/Legal.astro'
+import { serveTermsVersion } from '@/lib/hosted/terms'
+
+// The data processing agreement in the version an account agreed to, as
+// stored when the server first ran with it (src/lib/hosted/terms.ts). Hosted
+// only; an unknown version is an address that doesn't exist.
+const version = Astro.params.version ?? ''
+const legal = await serveTermsVersion(Astro, 'avv', version)
+if (legal instanceof Response) return legal
+---
+
+<LegalLayout page="avv" legal={legal} version={version} />

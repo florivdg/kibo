@@ -1,0 +1,82 @@
+---
+import { CircleAlert, Clock, TriangleAlert } from '@lucide/vue'
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { SUBSCRIPTION_PATH } from '@/lib/auth-paths'
+import { dayCount } from '@/lib/hosted/billing'
+import {
+  BOARDS_PAUSED,
+  ENDED_PERIOD,
+  EXPORT_UNTIL_DELETION,
+  OWNER_TAKES_CARE,
+} from '@/lib/hosted/messages'
+import type { SubscriptionNotice } from '@/lib/hosted/notice'
+
+// Where the subscription of the hosted instance stands, above every admin
+// page of a Kita (src/layouts/Admin.astro): the trial and how long it still
+// runs, the grace period after it or after a paid year, and the pause that
+// follows. Nothing is rendered for an active subscription, and nothing at all
+// on an instance that isn't hosted.
+interface Props {
+  notice: SubscriptionNotice
+}
+
+const { notice } = Astro.props
+
+function trialTitle(daysLeft: number, lastDay: string) {
+  if (daysLeft === 0) return 'Die Testphase endet heute.'
+  return `Testphase: noch ${dayCount(daysLeft)}, bis ${lastDay}.`
+}
+
+function title() {
+  if (notice.state === 'trial') {
+    return trialTitle(notice.daysLeft, notice.lastDay)
+  }
+  if (notice.state === 'grace') {
+    return `${ENDED_PERIOD[notice.ended]} ist am ${notice.lastDay} abgelaufen.`
+  }
+  return 'Das Abo ist pausiert.'
+}
+
+function consequence() {
+  if (notice.state === 'trial') {
+    return 'Danach lässt sich Kibo mit einem Abo weiter nutzen.'
+  }
+  if (notice.state === 'grace') {
+    return `Ab dem ${notice.pausesOn} werden die Bretter pausiert; Eltern können sie dann nicht mehr öffnen.`
+  }
+  return `${BOARDS_PAUSED} Zettel und Einstellungen bleiben erhalten; einzelne Zettel lassen sich weiterhin entfernen. ${EXPORT_UNTIL_DELETION}`
+}
+
+// Owners are sent to the subscription page, where they ask for an invoice;
+// the admins they invited read who takes care of it. One string each: between
+// two expressions the template would drop the space.
+const forOwner = `${consequence()} Was zu tun ist, steht unter `
+const forAdmin = `${consequence()} ${OWNER_TAKES_CARE}`
+
+const Icon = { trial: Clock, grace: TriangleAlert, paused: CircleAlert }[
+  notice.state
+]
+---
+
+<!-- role="status": the notice is there on every page, not news to interrupt
+     a screen reader with -->
+<Alert
+  role="status"
+  variant={notice.state === 'paused' ? 'destructive' : 'default'}
+  class:list={['mb-6', notice.state === 'grace' && 'border-amber-500/60']}
+  data-hosted-notice={notice.state}
+>
+  <Icon />
+  <AlertTitle>{title()}</AlertTitle>
+  <AlertDescription>
+    {notice.isOwner ? (
+      <Fragment>
+        {forOwner}
+        <a href={SUBSCRIPTION_PATH}>„Abo“</a>.
+      </Fragment>
+    ) : (
+      forAdmin
+    )}
+  </AlertDescription>
+</Alert>

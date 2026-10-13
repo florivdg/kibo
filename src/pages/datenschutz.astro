@@ -1,0 +1,11 @@
+---
+import LegalLayout from '@/layouts/Legal.astro'
+import { serveLegalPage } from '@/lib/legal'
+
+// The privacy policy: the operator's own page, or datenschutz.md from
+// LEGAL_DIR (src/lib/legal.ts)
+const legal = await serveLegalPage(Astro, 'datenschutz')
+if (legal instanceof Response) return legal
+---
+
+<LegalLayout page="datenschutz" legal={legal} />

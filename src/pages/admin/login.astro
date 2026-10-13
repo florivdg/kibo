@@ -1,0 +1,19 @@
+---
+import LoginForm from '@/components/auth/LoginForm.vue'
+import AuthLayout from '@/layouts/Auth.astro'
+import { adminRedirectTarget } from '@/lib/admin-redirect'
+import { PASSWORD_RESET_MARKER } from '@/lib/auth-errors'
+import { signupPolicy } from '@/lib/instance'
+
+const redirectTo = adminRedirectTarget(Astro.url.searchParams.get('redirectTo'))
+const passwordReset = Astro.url.searchParams.has(PASSWORD_RESET_MARKER)
+---
+
+<AuthLayout title="Anmelden">
+  <LoginForm
+    client:load
+    redirectTo={redirectTo}
+    passwordReset={passwordReset}
+    signupOpen={signupPolicy.open}
+  />
+</AuthLayout>

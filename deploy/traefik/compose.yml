@@ -1,0 +1,38 @@
+# Beispiel für alle, die noch keinen Reverse Proxy betreiben:
+#
+#   docker network create proxy
+#   docker compose -f deploy/traefik/compose.yml up -d
+#
+# Wer bereits einen Traefik hat, lässt dieses Verzeichnis unbenutzt und trägt
+# nur Netzwerk-, Entrypoint- und Certresolver-Namen in deploy/.env ein.
+
+name: traefik
+
+services:
+  traefik:
+    image: traefik:v3.6
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      # Nur lesend: Traefik muss Container sehen, nicht starten. „:ro“ schützt
+      # nur die Datei, nicht die API dahinter – wer mehr Abstand will, schaltet
+      # einen docker-socket-proxy dazwischen (docs/selbst-hosten/sicherheit.md).
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks: [proxy]
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  letsencrypt:

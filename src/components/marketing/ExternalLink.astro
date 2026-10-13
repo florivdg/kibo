@@ -1,0 +1,17 @@
+---
+import { linkClass } from '@/components/marketing/classes'
+
+// A link of the start page that leaves Kibo (the author's pages, the
+// repository): it opens in a new tab, so the page stays where it was, and
+// says so to screen readers, like the links of the terms box.
+interface Props {
+  href: string
+}
+
+const { href } = Astro.props
+---
+
+<a {href} target="_blank" rel="noopener" class={linkClass}>
+  <slot />
+  <span class="sr-only"> (öffnet in neuem Fenster)</span>
+</a>

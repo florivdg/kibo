@@ -1,0 +1,38 @@
+---
+import {
+  cardBodyClass,
+  cardTitleClass,
+  linkClass,
+} from '@/components/marketing/classes'
+import Section from '@/components/marketing/Section.astro'
+import { legalHref } from '@/lib/legal'
+import { trustPointsFor } from '@/lib/marketing/hosted-page'
+
+// What happens to the data, point by point. The links lead to the instance's
+// own legal pages — or to the operator's website where those are set.
+// `counting`: the start page counts its page views, and says so.
+interface Props {
+  counting?: boolean
+}
+
+const { counting = false } = Astro.props
+const points = trustPointsFor(counting)
+---
+
+<Section id="vertrauen" title="Datenschutz und Vertrauen">
+  <ul class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {points.map((point) => (
+      <li class="note-paper bg-white/70 px-5 py-5">
+        <h3 class={cardTitleClass}>{point.title}</h3>
+        <p class={cardBodyClass}>{point.body}</p>
+        {point.link && (
+          <p class="mt-2">
+            <a href={legalHref(point.link.page)} class={linkClass}>
+              {point.link.label}
+            </a>
+          </p>
+        )}
+      </li>
+    ))}
+  </ul>
+</Section>

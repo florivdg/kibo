@@ -1,0 +1,27 @@
+---
+import { linkClass } from '@/components/marketing/classes'
+import ExternalLink from '@/components/marketing/ExternalLink.astro'
+import Section from '@/components/marketing/Section.astro'
+import { docsPath } from '@/lib/docs/navigation'
+import { REPOSITORY_URL } from '@/lib/instance'
+
+// Kibo is free software, and the hosted instance says so: whoever would
+// rather run it themselves finds the source and the instructions here. The
+// link goes to the project's repository, not to SOURCE_URL — that one is the
+// footer's, for the source of this very instance.
+---
+
+<Section id="open-source" title="Open Source">
+  <div class="note-paper bg-flieder mt-8 max-w-3xl px-6 py-6">
+    <p class="text-lg leading-relaxed">
+      Kibo ist freie Software unter der AGPL-3.0. Der Quelltext ist öffentlich,
+      und ihr könnt Kibo auch selbst betreiben – ohne Abo.
+    </p>
+    <p class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-lg">
+      <ExternalLink href={REPOSITORY_URL}>Quelltext auf GitHub</ExternalLink>
+      <a href={docsPath('selbst-hosten/ueberblick')} class={linkClass}>
+        Anleitung: selbst hosten
+      </a>
+    </p>
+  </div>
+</Section>

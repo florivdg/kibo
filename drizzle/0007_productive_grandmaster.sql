@@ -1,0 +1,2 @@
+ALTER TABLE "hosted_subscription" ADD COLUMN "deletion_notice_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "hosted_subscription" ADD COLUMN "kitas_deleted_at" timestamp with time zone;

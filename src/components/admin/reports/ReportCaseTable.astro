@@ -1,0 +1,124 @@
+---
+import CardHeading from '@/components/admin/CardHeading.vue'
+import { Badge } from '@/components/ui/badge'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { dateAndTime } from '@/lib/board/time'
+import { reportCasePath } from '@/lib/reports/paths'
+import type { CaseSummary } from '@/lib/reports/queries'
+import type { ReportCaseStatus } from '@/lib/reports/types'
+
+// One kind of case on the overview (src/pages/admin/reports/index.astro):
+// the open ones by their latest report, the closed ones by when they were
+// closed. The list holds only the newest (listCases); when there are more,
+// the card says so.
+interface Props {
+  title: string
+  cases: CaseSummary[]
+  // Cases of this kind in all, the ones not listed included
+  total: number
+  status: ReportCaseStatus
+  empty: string
+}
+
+const { title, cases, total, status, empty } = Astro.props
+const open = status === 'open'
+const count = total === 1 ? '1 Fall' : `${total} Fälle`
+const partial =
+  total > cases.length
+    ? open
+      ? `Es werden die ${cases.length} zuletzt gemeldeten von ${total} offenen Fällen angezeigt. Ältere erscheinen hier, sobald Sie neuere abschließen.`
+      : `Es werden die ${cases.length} zuletzt abgeschlossenen von ${total} erledigten Fällen angezeigt.`
+    : undefined
+
+// Where the note is: taken down with the case, still on the board — which
+// is what an open case is about —, or gone by itself
+function noteState({ resolution, hanging }: CaseSummary) {
+  if (resolution === 'removed') {
+    return { label: 'Entfernt', variant: 'secondary' as const }
+  }
+  if (!hanging)
+    return { label: 'Hängt nicht mehr', variant: 'outline' as const }
+  return {
+    label: 'Hängt noch',
+    variant: open ? ('destructive' as const) : ('outline' as const),
+  }
+}
+
+const rows = cases.map((entry) => ({
+  ...entry,
+  when: dateAndTime((!open && entry.closedAt) || entry.lastReportedAt),
+  note: noteState(entry),
+}))
+---
+
+<Card>
+  <CardHeader>
+    <CardHeading>{title}</CardHeading>
+    <CardDescription>{count}</CardDescription>
+  </CardHeader>
+  <CardContent>
+    {cases.length ? (
+      <Table>
+        <TableCaption class="sr-only">{title}</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Zettel</TableHead>
+            <TableHead class="hidden sm:table-cell">Brett</TableHead>
+            <TableHead class="text-right">Meldungen</TableHead>
+            <TableHead class="hidden md:table-cell">
+              {open ? 'Zuletzt gemeldet' : 'Abgeschlossen'}
+            </TableHead>
+            <TableHead class="hidden sm:table-cell">Stand</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((entry) => (
+            <TableRow>
+              <TableCell class="max-w-72 font-medium whitespace-normal">
+                <a
+                  href={reportCasePath(entry.id)}
+                  class="underline-offset-4 hover:underline"
+                >
+                  {entry.noteTitle}
+                </a>
+              </TableCell>
+              <TableCell class="hidden text-muted-foreground sm:table-cell">
+                {entry.boardName}
+              </TableCell>
+              <TableCell class="text-right tabular-nums">
+                {entry.reportCount}
+              </TableCell>
+              <TableCell class="hidden text-muted-foreground md:table-cell">
+                {entry.when}
+              </TableCell>
+              <TableCell class="hidden sm:table-cell">
+                <Badge variant={entry.note.variant}>{entry.note.label}</Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    ) : (
+      <p class="text-sm text-muted-foreground">{empty}</p>
+    )}
+    {partial && (
+      <p class="mt-4 text-sm text-muted-foreground" role="note">
+        {partial}
+      </p>
+    )}
+  </CardContent>
+</Card>

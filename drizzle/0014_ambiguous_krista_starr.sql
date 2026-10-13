@@ -1,0 +1,1 @@
+ALTER TABLE "report_case" ADD COLUMN "closed_by_operator" boolean DEFAULT false NOT NULL;

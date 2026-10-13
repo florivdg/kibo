@@ -1,0 +1,23 @@
+---
+import '@/styles/global.css'
+import AdminHead from '@/components/admin/AdminHead.astro'
+import LegalFooter from '@/components/LegalFooter.astro'
+
+interface Props {
+  title: string
+}
+
+const { title } = Astro.props
+---
+
+<html lang="de" class="dark">
+  <head>
+    <AdminHead title={title} />
+  </head>
+  <body class="flex min-h-svh flex-col items-center justify-center bg-background p-6 font-sans text-foreground antialiased">
+    <main class="w-full max-w-sm flex-1 content-center">
+      <slot />
+    </main>
+    <LegalFooter />
+  </body>
+</html>

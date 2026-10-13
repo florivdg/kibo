@@ -1,0 +1,11 @@
+---
+import LegalLayout from '@/layouts/Legal.astro'
+import { serveLegalPage } from '@/lib/legal'
+
+// The imprint: the operator's own page, or impressum.md from LEGAL_DIR
+// (src/lib/legal.ts)
+const legal = await serveLegalPage(Astro, 'impressum')
+if (legal instanceof Response) return legal
+---
+
+<LegalLayout page="impressum" legal={legal} />

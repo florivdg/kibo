@@ -1,0 +1,38 @@
+---
+import KitaApp from '@/components/board/KitaApp.vue'
+import KitaPaused from '@/components/board/KitaPaused.astro'
+import UnknownLink from '@/components/board/UnknownLink.astro'
+import BoardLayout from '@/layouts/Board.astro'
+import { kitaManifestPath } from '@/lib/board/paths'
+import { findPublicKita } from '@/lib/board/queries'
+
+const found = await findPublicKita(Astro.params.kita ?? '', new Date())
+
+// The trailing slash, and caching, indexing and referrer headers for /k,
+// come from the middleware (src/middleware.ts,
+// src/lib/server/security-headers.ts)
+if (!found) {
+  Astro.response.status = 404
+  Astro.response.statusText = 'Not Found'
+}
+// A Kita whose subscription on the hosted instance has run out
+// (src/lib/hosted/access.ts) is a page of its own, answered with 200: it is
+// what parents see in the installed app and in a link preview, and nothing
+// is wrong with the address. No boards, and no manifest — there is nothing
+// to install.
+---
+
+{found?.paused ? (
+  <KitaPaused name={found.kita.name} responsible={found.responsible} />
+) : found ? (
+  <BoardLayout
+    title={`Bretter – ${found.kita.name}`}
+    description={`Die Bretter von ${found.kita.name}.`}
+    manifest={kitaManifestPath(found.kita.token)}
+    responsible={found.responsible}
+  >
+    <KitaApp client:load kita={found.kita} boards={found.boards} />
+  </BoardLayout>
+) : (
+  <UnknownLink />
+)}

@@ -1,0 +1,20 @@
+---
+import VerifyEmailNotice from '@/components/auth/VerifyEmailNotice.vue'
+import AuthLayout from '@/layouts/Auth.astro'
+
+// Reached three ways: after signing up or a blocked login (with ?email=), by a
+// verification link that worked (?verified=1, the marker Better Auth carries
+// over from the callback URL), and by one that didn't (?error=).
+const email = Astro.url.searchParams.get('email') ?? ''
+const linkError = Astro.url.searchParams.get('error')
+const verified = Astro.url.searchParams.has('verified')
+---
+
+<AuthLayout title="E-Mail bestätigen">
+  <VerifyEmailNotice
+    client:load
+    email={email}
+    linkError={linkError}
+    verified={verified}
+  />
+</AuthLayout>

@@ -1,0 +1,38 @@
+---
+import { getEntry, render } from 'astro:content'
+
+import NotFound from '@/components/NotFound.astro'
+import DocsLayout from '@/layouts/Docs.astro'
+import { docSummary, resolveDocPage } from '@/lib/docs/pages'
+import { instanceMode } from '@/lib/instance'
+
+// The documentation, rendered from the repository's docs/ folder — on the
+// hosted instance only. Rendered on request and not ahead of time: a
+// prerendered page is a static file that never passes the middleware with the
+// security headers, and no variable could switch it off.
+//
+// Everything that is no page answers exactly like an address that doesn't
+// exist: /docs without HOSTED, an unknown path, and the index under its own
+// id (it is /docs). That includes the reason phrase, which Astro only sets on
+// its own 404 route.
+const id = instanceMode.hosted ? resolveDocPage(Astro.params.slug) : undefined
+const entry = id === undefined ? undefined : await getEntry('docs', id)
+const page = entry && (await render(entry))
+
+if (!page) {
+  Astro.response.status = 404
+  Astro.response.statusText = 'Not Found'
+}
+---
+
+{entry && page ? (
+  <DocsLayout
+    id={entry.id}
+    description={docSummary(entry.body ?? '')}
+    headings={page.headings}
+  >
+    <page.Content />
+  </DocsLayout>
+) : (
+  <NotFound />
+)}

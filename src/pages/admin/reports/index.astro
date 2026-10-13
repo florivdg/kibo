@@ -1,0 +1,81 @@
+---
+import ReportCaseTable from '@/components/admin/reports/ReportCaseTable.astro'
+import NotFound from '@/components/NotFound.astro'
+import AdminLayout from '@/layouts/Admin.astro'
+import {
+  REPORT_CLOSED_RETENTION_DAYS,
+  REPORT_MAX_RETENTION_DAYS,
+} from '@/lib/limits'
+import { kitaAccess } from '@/lib/reports/access'
+import { settleAccess } from '@/lib/reports/page-access'
+import { REPORTS_KITA_PARAM, REPORTS_PATH } from '@/lib/reports/paths'
+import { listCases } from '@/lib/reports/queries'
+
+// The reported notes of the active Kita: the cases that wait for someone,
+// and the ones closed lately. A mail about several cases links here with
+// ?kita=<id>, which switches to that Kita first — for whoever handles its
+// reports; everyone else gets the answer of an address that doesn't exist.
+//
+// The middleware guarantees a session and an active Kita of the user's
+const user = Astro.locals.user!
+const organizationId = Astro.locals.organizationId!
+
+const requested = Astro.url.searchParams.get(REPORTS_KITA_PARAM)
+const access = requested
+  ? await settleAccess(
+      await kitaAccess(requested, user.id, organizationId),
+      Astro.request,
+    )
+  : 'show'
+if (access === 'reload') return Astro.redirect(REPORTS_PATH)
+if (access === 'none') {
+  Astro.response.status = 404
+  Astro.response.statusText = 'Not Found'
+}
+
+const now = new Date()
+const [open, closed] =
+  access === 'show'
+    ? await Promise.all([
+        listCases(organizationId, 'open', now),
+        listCases(organizationId, 'closed', now),
+      ])
+    : [
+        { cases: [], total: 0 },
+        { cases: [], total: 0 },
+      ]
+---
+
+{access === 'show' ? (
+  <AdminLayout title="Meldungen" breadcrumbs={[{ label: 'Meldungen' }]}>
+    <div class="flex flex-col gap-6">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight">Meldungen</h1>
+        <p class="mt-1 max-w-2xl text-muted-foreground">
+          Zettel, die Eltern gemeldet haben. Ein gemeldeter Zettel bleibt
+          sichtbar, bis jemand aus Ihrem Team entscheidet. Mehrere Meldungen zum
+          selben Zettel ergeben einen Fall.
+        </p>
+      </div>
+      <ReportCaseTable
+        title="Offen"
+        cases={open.cases}
+        total={open.total}
+        status="open"
+        empty="Keine offenen Meldungen."
+      />
+      <ReportCaseTable
+        title="Erledigt"
+        cases={closed.cases}
+        total={closed.total}
+        status="closed"
+        empty="Noch keine erledigten Meldungen."
+      />
+      <p class="max-w-2xl text-sm text-muted-foreground">
+        {`Erledigte Fälle werden ${REPORT_CLOSED_RETENTION_DAYS} Tage nach dem Abschluss gelöscht, offene Fälle samt der Kopie des Zettels spätestens ${REPORT_MAX_RETENTION_DAYS} Tage nach der ersten Meldung.`}
+      </p>
+    </div>
+  </AdminLayout>
+) : (
+  <NotFound />
+)}

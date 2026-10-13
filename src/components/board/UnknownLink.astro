@@ -1,0 +1,18 @@
+---
+import PageNotice from '@/components/board/PageNotice.astro'
+
+// What an address under /k/ answers when its Kita token leads nowhere: one
+// that was never handed out, or the one from before the Kita renewed its link
+// (src/pages/404.astro, src/pages/k/). One page for both, so it says nothing
+// about which. The page sets the 404.
+---
+
+<PageNotice
+  title="Link nicht gefunden"
+  description="Diesen Link gibt es nicht (mehr)."
+  heading="Hier hängt nichts."
+>
+  Diesen Link gibt es nicht (mehr). Vielleicht hat die Kita einen neuen Link
+  verschickt. Falls du Kibo auf dem Home-Bildschirm hast: Symbol entfernen und
+  den neuen Link hinzufügen.
+</PageNotice>

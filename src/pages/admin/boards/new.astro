@@ -1,0 +1,26 @@
+---
+import CreateBoardForm from '@/components/admin/boards/CreateBoardForm.vue'
+import AdminLayout from '@/layouts/Admin.astro'
+
+// A Kita the hosted instance has paused takes no new boards; the list says
+// why (the notice in the layout)
+if (Astro.locals.kitaPaused) return Astro.redirect('/admin/boards')
+---
+
+<AdminLayout
+  title="Brett anlegen"
+  breadcrumbs={[
+    { label: 'Bretter', href: '/admin/boards' },
+    { label: 'Brett anlegen' },
+  ]}
+>
+  <div class="space-y-6">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Brett anlegen</h1>
+      <p class="mt-1 text-muted-foreground">
+        Nach dem Anlegen erhalten Sie den Link zum Teilen.
+      </p>
+    </div>
+    <CreateBoardForm client:load />
+  </div>
+</AdminLayout>

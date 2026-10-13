@@ -1,0 +1,23 @@
+# Optional: a second domain that sends every request on to KIBO_DOMAIN, for
+# example the bare domain (mein-kibo.de) when Kibo runs on www.mein-kibo.de.
+# Switched on in .env, so update.sh and backup.sh pick it up as well:
+#
+#   KIBO_REDIRECT_DOMAIN=mein-kibo.de
+#   COMPOSE_FILE=compose.yml:compose.redirect.yml
+#
+# The router gets its own certificate and answers with a permanent redirect
+# that keeps path and query; the request never reaches the app. Both names
+# need a DNS record pointing at this host.
+
+services:
+  app:
+    labels:
+      - traefik.http.routers.kibo-redirect.rule=Host(`${KIBO_REDIRECT_DOMAIN:?KIBO_REDIRECT_DOMAIN fehlt in der .env}`)
+      - traefik.http.routers.kibo-redirect.entrypoints=${KIBO_ENTRYPOINT:-websecure}
+      - traefik.http.routers.kibo-redirect.tls=true
+      - traefik.http.routers.kibo-redirect.tls.certresolver=${KIBO_CERTRESOLVER:-letsencrypt}
+      - traefik.http.routers.kibo-redirect.middlewares=kibo-security@docker,kibo-to-primary@docker
+      - traefik.http.routers.kibo-redirect.service=kibo
+      - traefik.http.middlewares.kibo-to-primary.redirectregex.regex=^https?://[^/]+/(.*)
+      - traefik.http.middlewares.kibo-to-primary.redirectregex.replacement=https://${KIBO_DOMAIN}/$${1}
+      - traefik.http.middlewares.kibo-to-primary.redirectregex.permanent=true

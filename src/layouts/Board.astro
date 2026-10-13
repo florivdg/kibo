@@ -1,0 +1,23 @@
+---
+import FrontendLayout from '@/layouts/Frontend.astro'
+import type { KitaResponsibility } from '@/lib/board/privacy-contact'
+
+interface Props {
+  title: string
+  description: string
+  manifest?: string
+  responsible?: KitaResponsibility | undefined
+}
+
+const { title, description, manifest, responsible } = Astro.props
+---
+
+<FrontendLayout
+  title={title}
+  description={description}
+  manifest={manifest}
+  responsible={responsible}
+  unlisted
+>
+  <slot />
+</FrontendLayout>

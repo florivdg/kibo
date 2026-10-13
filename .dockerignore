@@ -1,0 +1,30 @@
+# Never into an image layer: secrets and local state
+.env
+.env.*
+!.env.example
+
+# Rebuilt inside the image
+node_modules
+dist
+.astro
+.fallow
+
+# Not needed for the build
+.git
+.github
+.claude
+.vscode
+.idea
+deploy
+videos
+**/*.md
+!README.md
+# The documentation is compiled into the build (src/content.config.ts): its
+# pages and the screenshots they show, not the leaflet
+!docs/**/*.md
+docs/kibo-infoblatt.pdf
+.DS_Store
+
+# Capability tokens, private journals/bundles and local load artifacts
+.load-private
+load-results

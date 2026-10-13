@@ -1,0 +1,1 @@
+ALTER TABLE "hosted_subscription" ADD COLUMN "deletion_held_until" timestamp with time zone;

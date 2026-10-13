@@ -1,0 +1,243 @@
+---
+import { BETTER_AUTH_URL } from 'astro:env/server'
+
+import NotePin from '@/components/board/NotePin.vue'
+import Author from '@/components/marketing/Author.astro'
+import { ctaClass, primaryCtaClass } from '@/components/marketing/classes'
+import Faq from '@/components/marketing/Faq.astro'
+import HowItWorks from '@/components/marketing/HowItWorks.astro'
+import OpenSource from '@/components/marketing/OpenSource.astro'
+import Pricing from '@/components/marketing/Pricing.astro'
+import Trust from '@/components/marketing/Trust.astro'
+import FrontendLayout from '@/layouts/Frontend.astro'
+import {
+  analyticsEnabled,
+  hostedPriceNote,
+  hostedPricing,
+  instanceMode,
+  signupPolicy,
+} from '@/lib/instance'
+import {
+  hostedStartPage,
+  jsonLd,
+  launchFilm,
+  noteDurations,
+  serviceFilm,
+  structuredData,
+} from '@/lib/marketing/hosted-page'
+
+const claim = 'digitale Pinnwand für eure Kita-Eltern'
+const headline = `Die ${claim}`
+const productTitle = `Kibo – die ${claim}`
+const productLead = `${headline}: gefunden, gesucht, zu verschenken.`
+const productDescription = `${productLead} Eltern tauschen sich selbst aus, im Browser, ohne Konto und ohne Messenger-Gruppe.`
+
+// On the hosted instance the start page is also the page of the service:
+// what it costs, how to start, what happens to the data and the questions
+// around it (src/lib/marketing/hosted-page.ts, every number from the
+// configuration). Everywhere else none of this exists and the page is the
+// one it has always been.
+const service = instanceMode.hosted
+  ? hostedStartPage(hostedPricing, signupPolicy.open)
+  : undefined
+
+// The hosted instance shows its own film, which says where it is hosted;
+// every other instance the one that holds anywhere
+const film = service ? serviceFilm : launchFilm
+
+// The hosted instance names the trial and the price where a search engine
+// shows them — the trial only while somebody can sign up (`cta`), and the
+// price in place of the product's second sentence, so the description stays
+// short enough to be shown in full
+const title = service?.cta ? `${productTitle}, ${service.cta}` : productTitle
+const description = service
+  ? `${productLead} ${service.summary}`
+  : productDescription
+
+// Structured data for search engines: the product and the launch video, on
+// the hosted instance the price and the questions as well. A data block, not
+// a script the browser runs — the CSP doesn't apply to it.
+const absolute = (path: string) => new URL(path, BETTER_AUTH_URL).href
+const linkedData = jsonLd(
+  structuredData({ absolute, description, film, hosted: service }),
+)
+
+// Page views, counted by Plausible on the hosted instance when it is set up
+// to (PLAUSIBLE_DOMAIN): the server reports them (src/lib/analytics/), the
+// page itself carries nothing for it — only its trust point says so
+const counting = analyticsEnabled()
+
+// The two buttons. The hosted instance leads with the trial, as long as
+// somebody can sign up; everywhere else the login comes first.
+const login = { href: '/admin/login', label: 'Anmelden' }
+const signup = signupPolicy.open
+  ? { href: '/admin/signup', label: service?.cta ?? 'Kita registrieren' }
+  : undefined
+const [primary, secondary] =
+  service && signup ? [signup, login] : [login, signup]
+
+// The feature points hang on the wall like the notes on a board
+const features = [
+  {
+    kicker: 'Teilen',
+    title: 'Per Link oder QR-Code',
+    body: 'Jedes Brett hat seinen eigenen, nicht erratbaren Link. Den QR-Code druckt ihr aus und hängt ihn in den Flur.',
+    paper: 'bg-sonne',
+    tilt: '-rotate-1',
+    pin: 'bg-kirsche',
+  },
+  {
+    kicker: 'Anpinnen',
+    title: 'Zettel ohne Konto',
+    body: 'Eltern öffnen den Link und pinnen ihren Zettel direkt an – ohne Registrierung und ohne App. Ihr müsst nichts weiterleiten oder freigeben, könnt aber jeden Zettel wieder abnehmen.',
+    paper: 'bg-gras',
+    tilt: 'rotate-[0.6deg]',
+    pin: 'bg-tinte',
+  },
+  {
+    kicker: 'Aufräumen',
+    title: 'Verschwindet von selbst',
+    body: `Zettel hängen ${noteDurations} Tage und verschwinden dann automatisch. Ein Spam-Schutz hält ungebetene Einträge fern.`,
+    paper: 'bg-rosa',
+    tilt: '-rotate-[0.8deg]',
+    pin: 'bg-white',
+  },
+  {
+    kicker: 'Benachrichtigen',
+    title: 'Neue Zettel aufs Handy',
+    body: 'Wer mag, tippt auf dem Brett die Glocke an und erfährt von neuen Zetteln, auch auf dem iPhone. Pro Brett könnt ihr das abschalten.',
+    paper: 'bg-flieder',
+    tilt: 'rotate-[0.8deg]',
+    pin: 'bg-kirsche',
+  },
+]
+---
+
+<FrontendLayout title={title} description={description} canonical="/">
+  <script is:inline type="application/ld+json" set:html={linkedData} />
+  <main class="mx-auto w-full max-w-6xl px-4 pt-8 pb-20 sm:px-6 sm:pt-14 sm:pb-28">
+    <header class="max-w-3xl">
+      <img
+        src="/logo.svg"
+        alt="Kibo"
+        width="224"
+        height="64"
+        class="h-10 w-auto sm:h-12"
+      />
+      <h1 class="font-display mt-10 text-4xl leading-[1.35] text-balance sm:mt-14 sm:text-6xl">
+        {headline}
+      </h1>
+      <p class="mt-5 text-xl leading-relaxed font-semibold sm:text-2xl">
+        Gefunden, gesucht, zu verschenken: Eltern tauschen sich selbst aus –
+        einfach im Browser, ohne Konto und ohne Messenger-Gruppe.
+      </p>
+      <p class="text-tinte/80 mt-3 max-w-[38rem] text-lg leading-relaxed">
+        Die Jacke aus der Garderobe, das Laufrad zum Verschenken, die
+        Fahrgemeinschaft zum Sommerfest: Ihr legt die Bretter an und teilt den
+        Link, die Eltern pinnen ihre Zettel selbst an. Kibo ergänzt eure
+        Kita-App um einen Ort, an dem Eltern sich untereinander austauschen.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          href={primary.href}
+          class:list={[
+            ctaClass,
+            primaryCtaClass,
+            'shadow-[0_12px_24px_-10px_rgb(34_48_74/0.7)]',
+          ]}
+        >
+          {primary.label}
+        </a>
+        {secondary && (
+          <a
+            href={secondary.href}
+            class:list={[ctaClass, 'border-tinte/25 hover:bg-tinte/5 border-2']}
+          >
+            {secondary.label}
+          </a>
+        )}
+        {/* Only the hosted instance serves the documentation itself */}
+        {instanceMode.hosted && (
+          <a
+            href="/docs"
+            class:list={[
+              ctaClass,
+              'underline underline-offset-4 hover:no-underline',
+            ]}
+          >
+            Dokumentation
+          </a>
+        )}
+      </div>
+    </header>
+
+    <figure class="mt-16 sm:mt-20">
+      <!-- No autoplay: the Permissions-Policy forbids it, and the video has
+           sound. The poster is the video's last frame, the logo lockup. -->
+      <video
+        controls
+        playsinline
+        preload="none"
+        poster={film.poster}
+        width="1920"
+        height="1080"
+        aria-describedby="video-caption"
+        class="note-paper aspect-video h-auto w-full bg-white/40"
+      >
+        {film.sources.map(({ src, type, media }) => (
+          <source src={src} type={type} media={media} />
+        ))}
+        {film.captions && (
+          <track
+            kind="captions"
+            src={film.captions}
+            srclang="de"
+            label="Deutsch"
+          />
+        )}
+        <a href={film.file}>Video herunterladen ({film.fileLabel})</a>
+      </video>
+      <figcaption id="video-caption" class="text-tinte/80 mt-4 text-base">
+        {film.caption}
+      </figcaption>
+    </figure>
+
+    <section aria-labelledby="features" class="mt-20 sm:mt-28">
+      <h2 id="features" class="sr-only">
+        So funktioniert Kibo
+      </h2>
+      <ul class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+        {features.map((feature) => (
+          <li
+            class:list={[
+              'note-paper relative px-5 pt-8 pb-6',
+              feature.paper,
+              feature.tilt,
+            ]}
+          >
+            <NotePin color={feature.pin} />
+            <p class="text-tinte/80 text-sm font-semibold">{feature.kicker}</p>
+            <h3 class="mt-1 text-xl leading-snug font-bold text-balance">
+              {feature.title}
+            </h3>
+            <p class="mt-2 leading-relaxed">{feature.body}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+    {service && (
+      <Fragment>
+        <Pricing
+          facts={service.facts}
+          note={hostedPriceNote.text}
+          cta={signup}
+        />
+        <HowItWorks steps={service.steps} />
+        <Trust counting={counting} />
+        <Faq entries={service.faq} />
+        <Author />
+        <OpenSource />
+      </Fragment>
+    )}
+  </main>
+</FrontendLayout>

@@ -1,0 +1,192 @@
+# Kibo behind a Traefik that is already running on this host.
+#
+#   docker network create proxy   # only if it doesn't exist yet
+#   cp .env.example .env && $EDITOR .env
+#   docker compose up -d
+#
+# Everything instance-specific lives in .env. Neither the app nor the database
+# publishes a port: the app is reachable through Traefik only, which is what
+# makes the forwarded client IP trustworthy (see
+# docs/selbst-hosten/sicherheit.md).
+#
+# Running a second Kibo on the same host? Use a different project name
+# (COMPOSE_PROJECT_NAME) and rename the router, service and middlewares in the
+# labels below — Traefik needs unique names per instance.
+
+name: kibo
+
+# Docker's json-file driver keeps every line forever unless told otherwise:
+# three files of 10 MB per container, then the oldest goes
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  # Runs to completion on every start; the app waits for it to succeed, so a
+  # failed migration keeps the new version from serving requests
+  migrate:
+    image: ghcr.io/florivdg/kibo-migrate:${KIBO_IMAGE_TAG:-latest}
+    restart: 'no'
+    init: true
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL fehlt in der .env}
+    networks: [internal]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Optional helper, never started by a normal `docker compose up`.
+  # Explicit provision/cleanup commands reuse this stack's settings; this is
+  # not the load generator (which must run on a separate host).
+  load-fixtures:
+    image: ghcr.io/florivdg/kibo-load-fixtures:${KIBO_IMAGE_TAG:-latest}
+    profiles: [load]
+    restart: 'no'
+    init: true
+    security_opt: [no-new-privileges:true]
+    # Reading a journal with --entrypoint cat must not retain its tokens in logs.
+    logging:
+      driver: none
+    environment:
+      LOAD_DATABASE_URL: ${DATABASE_URL:?DATABASE_URL fehlt in der .env}
+      LOAD_ORIGIN: ${BETTER_AUTH_URL:?BETTER_AUTH_URL fehlt in der .env}
+      LOAD_HOSTED: ${HOSTED:-false}
+      LOAD_ENVIRONMENT: ${KIBO_LOAD_ENVIRONMENT:-staging}
+      LOAD_FIXTURE_AUTHORIZATION: provision-synthetic-${KIBO_LOAD_ENVIRONMENT:-staging}
+    volumes:
+      - load_fixtures:/fixtures
+    networks: [internal]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    image: ghcr.io/florivdg/kibo:${KIBO_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    stop_grace_period: 30s
+    # A minimal init as PID 1 forwards SIGTERM and reaps zombies; the app never
+    # needs to gain privileges
+    init: true
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+    # Missing or empty, compose refuses to start. The app checks them again
+    # (length of the secret, https) and names what is wrong in its log.
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL fehlt in der .env}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL fehlt in der .env}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET fehlt in der .env (openssl rand -base64 32)}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      # Who may sign up (docs/selbst-hosten/konfiguration.md)
+      SIGNUP_MODE: ${SIGNUP_MODE:-open}
+      SIGNUP_EMAIL_DOMAINS: ${SIGNUP_EMAIL_DOMAINS:-}
+      # The project's hosted instance only; stays false when self-hosting.
+      # "Hilfe" in the admin area links to DOCS_URL (empty: the docs on GitHub)
+      HOSTED: ${HOSTED:-false}
+      DOCS_URL: ${DOCS_URL:-}
+      # Where the footer's „Quelltext“ link leads; empty: Kibo's repository.
+      # For whoever runs a changed version (AGPL § 13).
+      SOURCE_URL: ${SOURCE_URL:-}
+      # Hosted mode only (HOSTED=true), empty when self-hosting; the
+      # operator's script reads them here too (node dist/admin.mjs)
+      HOSTED_PRICE_EUR: ${HOSTED_PRICE_EUR:-}
+      HOSTED_INCLUDED_KITAS: ${HOSTED_INCLUDED_KITAS:-}
+      HOSTED_EXTRA_KITA_EUR: ${HOSTED_EXTRA_KITA_EUR:-}
+      HOSTED_TRIAL_DAYS: ${HOSTED_TRIAL_DAYS:-}
+      HOSTED_PRICE_NOTE: ${HOSTED_PRICE_NOTE:-}
+      HOSTED_TERMS_VERSION: ${HOSTED_TERMS_VERSION:-}
+      HOSTED_OPERATOR_EMAIL: ${HOSTED_OPERATOR_EMAIL:-}
+      PLAUSIBLE_DOMAIN: ${PLAUSIBLE_DOMAIN:-}
+      PLAUSIBLE_URL: ${PLAUSIBLE_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_ALLOW_INSECURE: ${SMTP_ALLOW_INSECURE:-false}
+      IMPRESSUM_URL: ${IMPRESSUM_URL:-}
+      DATENSCHUTZ_URL: ${DATENSCHUTZ_URL:-}
+      # Who runs the instance, in the footer of every mail. Lines separated
+      # by |
+      OPERATOR_NAME: ${OPERATOR_NAME:-}
+      OPERATOR_ADDRESS: ${OPERATOR_ADDRESS:-}
+      OPERATOR_EMAIL: ${OPERATOR_EMAIL:-}
+      OPERATOR_LEGAL_INFO: ${OPERATOR_LEGAL_INFO:-}
+      # Hosted mode only, empty when self-hosting
+      AGB_URL: ${AGB_URL:-}
+      AVV_URL: ${AVV_URL:-}
+      # Web push: all three or none
+      # (docs/selbst-hosten/benachrichtigungen.md)
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+    volumes:
+      # Imprint and privacy policy as Markdown; not needed when the *_URL
+      # variables point to your own website
+      - ./legal:/app/legal:ro
+    networks: [proxy, internal]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${KIBO_PROXY_NETWORK:-proxy}
+      - traefik.http.routers.kibo.rule=Host(`${KIBO_DOMAIN:?KIBO_DOMAIN fehlt in der .env}`)
+      - traefik.http.routers.kibo.entrypoints=${KIBO_ENTRYPOINT:-websecure}
+      - traefik.http.routers.kibo.tls=true
+      - traefik.http.routers.kibo.tls.certresolver=${KIBO_CERTRESOLVER:-letsencrypt}
+      - traefik.http.routers.kibo.middlewares=kibo-security@docker,kibo-compress@docker
+      - traefik.http.services.kibo.loadbalancer.server.port=4321
+      # The app sets CSP, framing, referrer and cache headers itself. Two are
+      # left to the proxy: HSTS (only it knows the site is served over HTTPS)
+      # and nosniff for the static files under /_astro/, which never pass the
+      # app's middleware. No referrerPolicy or frameDeny here: Traefik would
+      # overwrite the app's stricter no-referrer on board links.
+      - traefik.http.middlewares.kibo-security.headers.stsSeconds=31536000
+      - traefik.http.middlewares.kibo-security.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.kibo-security.headers.contentTypeNosniff=true
+      # The Node server sends everything uncompressed; Traefik compresses the
+      # text it serves (pages, actions, CSS, JavaScript, SVG, manifest).
+      - traefik.http.middlewares.kibo-compress.compress.includedContentTypes=text/html,text/css,text/javascript,application/javascript,application/json,application/json+devalue,application/manifest+json,image/svg+xml
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    stop_grace_period: 30s
+    logging: *logging
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER fehlt in der .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in der .env (openssl rand -hex 24)}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB fehlt in der .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks: [internal]
+    healthcheck:
+      # $$: read inside the container, from the environment set above
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  # Created once with `docker network create …` and shared with Traefik.
+  # Everything else in this network reaches the app directly, past the proxy,
+  # so a network shared with nothing but Traefik is the safer choice
+  # (docs/selbst-hosten/sicherheit.md).
+  proxy:
+    external: true
+    name: ${KIBO_PROXY_NETWORK:-proxy}
+  # No route to the outside; app, migrate and the optional helper reach the database
+  internal:
+    internal: true
+
+volumes:
+  postgres_data:
+  load_fixtures:

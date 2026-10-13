@@ -1,0 +1,2 @@
+ALTER TABLE "push_subscription" ADD COLUMN "last_visit_at" timestamp with time zone DEFAULT now() NOT NULL;--> statement-breakpoint
+CREATE INDEX "push_subscription_endpoint_idx" ON "push_subscription" USING btree ("endpoint");

@@ -1,0 +1,40 @@
+---
+import { FOCUS_RING } from '@/components/docs/focus-ring'
+
+// The way to the page before and the page after, in reading order
+interface PageLink {
+  href: string
+  title: string
+}
+
+interface Props {
+  previous?: PageLink
+  next?: PageLink
+}
+
+const { previous, next } = Astro.props
+
+const linkClass = `border-tinte/20 hover:bg-tinte/5 block rounded-2xl border-2 px-4 py-3 ${FOCUS_RING}`
+---
+
+<nav
+  aria-label="Vorherige und nächste Seite"
+  class="border-tinte/15 mt-12 grid gap-3 border-t-2 pt-6 sm:grid-cols-2"
+>
+  {previous && (
+    <a href={previous.href} rel="prev" class={linkClass}>
+      <span class="text-tinte/80 block text-sm">← Zurück</span>
+      <span class="font-bold">{previous.title}</span>
+    </a>
+  )}
+  {next && (
+    <a
+      href={next.href}
+      rel="next"
+      class:list={[linkClass, 'sm:col-start-2 sm:text-right']}
+    >
+      <span class="text-tinte/80 block text-sm">Weiter →</span>
+      <span class="font-bold">{next.title}</span>
+    </a>
+  )}
+</nav>

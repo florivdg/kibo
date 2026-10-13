@@ -1,0 +1,26 @@
+---
+import CreateOrganizationForm from '@/components/auth/CreateOrganizationForm.vue'
+import AuthLayout from '@/layouts/Auth.astro'
+import { kitaCreationForm } from '@/lib/hosted/access'
+import { termsLinks } from '@/lib/legal'
+
+// Also where an admin without a Kita lands after signing in; with one, the
+// page is reached from the Kita switcher and can be left again
+const canCancel = !!Astro.locals.organizationId
+
+// The middleware only renders this page with a session
+const user = Astro.locals.user!
+
+// On the hosted instance an account whose subscription ran out gets no
+// further Kita: the subscription page says what to do instead of a form that
+// can only fail
+const { redirect, termsRequired } = await kitaCreationForm(user.id)
+if (redirect) return Astro.redirect(redirect)
+
+// … and before its first Kita it agrees to the terms
+const terms = termsRequired ? termsLinks() : undefined
+---
+
+<AuthLayout title="Kita anlegen">
+  <CreateOrganizationForm client:load canCancel={canCancel} terms={terms} />
+</AuthLayout>

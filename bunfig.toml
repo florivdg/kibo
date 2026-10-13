@@ -1,0 +1,4 @@
+[test]
+# `astro:env/server` only exists inside Astro's build; the stub hands the same
+# values to modules under test (see tests/preload.ts)
+preload = ["./tests/preload.ts"]

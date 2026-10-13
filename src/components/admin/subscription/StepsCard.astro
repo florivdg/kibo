@@ -1,0 +1,53 @@
+---
+import { CircleCheck } from '@lucide/vue'
+
+import CardHeading from '@/components/admin/CardHeading.vue'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from '@/components/ui/card'
+
+// How an account of the hosted instance pays: it asks for an invoice, gets
+// it by mail, and is activated once the money is there — and, while a
+// request is waiting for the operator, that it is.
+interface Props {
+  // The day an invoice was asked for and where it goes; missing without an
+  // open request
+  requested?: { on: string; email: string }
+}
+
+const { requested } = Astro.props
+---
+
+<Card class="max-w-xl">
+  <CardHeader>
+    <CardHeading>So geht es weiter</CardHeading>
+    <CardDescription>
+      Bezahlt wird einmal im Jahr im Voraus, auf Rechnung.
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ol class="list-decimal space-y-2 pl-5 text-sm">
+      <li>Sie fordern unten eine Rechnung an.</li>
+      <li>Die Rechnung kommt per E-Mail an die Rechnungsadresse.</li>
+      <li>Nach Zahlungseingang schalten wir das Abo für ein Jahr frei.</li>
+    </ol>
+    <p class="mt-4 text-sm text-muted-foreground">
+      Das Abo verlängert sich nicht automatisch: Für jedes weitere Jahr fordern
+      Sie eine neue Rechnung an. Vor dem Ablauf erinnern wir Sie per E-Mail.
+    </p>
+  </CardContent>
+</Card>
+
+{requested && (
+  <Alert role="status" class="max-w-xl" data-invoice-requested>
+    <CircleCheck />
+    <AlertTitle>{`Rechnung angefordert am ${requested.on}`}</AlertTitle>
+    <AlertDescription>
+      {`Die Rechnung geht an ${requested.email}. Sobald die Zahlung eingegangen ist, schalten wir das Abo frei. Stimmt eine Angabe nicht, fordern Sie die Rechnung unten noch einmal an.`}
+    </AlertDescription>
+  </Alert>
+)}

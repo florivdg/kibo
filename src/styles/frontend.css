@@ -1,0 +1,223 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: var(--font-playwrite), cursive;
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+
+  /* Kita-Tonpapier auf einer Filzwand */
+  --color-filz: #c9dbe6;
+  --color-tinte: #22304a;
+  --color-sonne: #ffd54a;
+  --color-gras: #aedd8e;
+  --color-rosa: #ffbccd;
+  --color-flieder: #cfbdf6;
+  /* Dark enough for white text, also at /90 on hover (4.6:1 on white) */
+  --color-kirsche: #c3373d;
+
+  --animate-pin-drop: pin-drop 500ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+
+  @keyframes pin-drop {
+    from {
+      opacity: 0;
+      translate: 0 -1.5rem;
+      scale: 1.06;
+    }
+  }
+}
+
+/* Screens tall enough for the board's bar to stick to the top; a phone held
+   sideways keeps its few lines for the notes */
+@custom-variant tall (@media (min-height: 30rem));
+
+/* Pages rendered from Markdown — imprint and privacy policy from the files
+   the operator mounts, the documentation from docs/ — so their markup can't
+   carry utility classes */
+.markdown-prose {
+  /* What sets a table head, a code block or inline code apart from the page.
+     On the felt that is a lighter patch; the documentation's sheet of paper
+     sets --prose-tint to a darker one (src/layouts/Docs.astro). */
+  --tint: var(--prose-tint, rgb(255 255 255 / 0.5));
+
+  line-height: 1.7;
+
+  /* Text keeps a readable measure; tables, code blocks and images may use the
+     whole width */
+  & :is(h1, h2, h3, h4, p, ul, ol, blockquote) {
+    max-width: 70ch;
+  }
+
+  & h1 {
+    margin-block: 0 1.5rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 1.2rem + 2.4vw, 2.5rem);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  & h2 {
+    margin-block: 2rem 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  & h3 {
+    margin-block: 1.5rem 0.5rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  & h4 {
+    margin-block: 1.25rem 0.5rem;
+    font-weight: 700;
+  }
+
+  /* A heading jumped to from the table of contents keeps some air above */
+  & :is(h2, h3, h4) {
+    scroll-margin-top: 1.5rem;
+  }
+
+  & p,
+  & ul,
+  & ol,
+  & table,
+  & pre {
+    margin-block: 0.75rem;
+  }
+
+  & ul,
+  & ol {
+    padding-inline-start: 1.5rem;
+    list-style: revert;
+  }
+
+  & a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    overflow-wrap: break-word;
+  }
+
+  & a:hover {
+    text-decoration: none;
+  }
+
+  & strong {
+    font-weight: 700;
+  }
+
+  & hr {
+    margin-block: 2rem;
+    border-top: 1px solid rgb(34 48 74 / 0.2);
+  }
+
+  /* Wide tables scroll on their own instead of widening the page on phones */
+  & table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+  }
+
+  & th,
+  & td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgb(34 48 74 / 0.2);
+    text-align: start;
+    vertical-align: top;
+  }
+
+  & th {
+    font-weight: 700;
+    background-color: var(--tint);
+  }
+
+  & code {
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.3rem;
+    background-color: var(--tint);
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
+
+  /* In a table a variable's name stays in one piece: `anywhere` would let the
+     column shrink to a few letters */
+  & :is(th, td) code {
+    overflow-wrap: break-word;
+  }
+
+  /* Code blocks keep their lines and scroll sideways. No colours: a
+     highlighter's inline styles would need an exception in the CSP. */
+  & pre {
+    padding: 0.9rem 1.1rem;
+    overflow-x: auto;
+    border-radius: 0.9rem;
+    background-color: var(--tint);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    tab-size: 2;
+  }
+
+  & pre code {
+    padding: 0;
+    border-radius: 0;
+    background-color: transparent;
+    font-size: inherit;
+    overflow-wrap: normal;
+  }
+
+  /* Screenshots hang in the text like notes on the wall */
+  & img {
+    max-width: 100%;
+    height: auto;
+    margin-block: 1.25rem;
+    border-radius: 1.5rem 1.1rem 1.7rem 1.2rem;
+    box-shadow:
+      0 1px 0 rgb(34 48 74 / 0.12),
+      0 14px 22px -14px rgb(34 48 74 / 0.55);
+  }
+
+  & blockquote {
+    margin-block: 1rem;
+    padding-inline-start: 1rem;
+    border-inline-start: 4px solid rgb(34 48 74 / 0.25);
+  }
+}
+
+/* The board's bar sticks to the top of a tall enough screen (BoardHeader.vue):
+   whatever gets the focus is scrolled clear of it. Its height, which it
+   measures itself since the board's name may take several lines, plus some
+   air. */
+html:has([data-sticky-bar]) {
+  @variant tall {
+    scroll-padding-top: calc(var(--sticky-bar-height, 4rem) + 0.75rem);
+  }
+}
+
+/* The board's pin button sticks to the bottom of the screen (BoardApp.vue):
+   whatever gets the focus is scrolled clear of it, not behind it. Its height
+   with the gap below it, plus some air. */
+html:has([data-sticky-pin]) {
+  scroll-padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* iOS keeps scrolling the page behind a modal dialog otherwise */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/* A sheet of paper pinned to the felt: slightly uneven corners and a soft
+   shadow. Colour, padding and tilt stay with the caller */
+@utility note-paper {
+  border-radius: 1.5rem 1.1rem 1.7rem 1.2rem;
+  box-shadow:
+    0 1px 0 rgb(34 48 74 / 0.12),
+    0 14px 22px -14px rgb(34 48 74 / 0.55);
+}
+
+/* Faint felt texture behind the notes */
+@utility bg-filz-texture {
+  background-color: var(--color-filz);
+  background-image: radial-gradient(rgb(34 48 74 / 0.06) 1px, transparent 1px);
+  background-size: 5px 5px;
+}

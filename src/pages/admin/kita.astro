@@ -1,0 +1,104 @@
+---
+import CardHeading from '@/components/admin/CardHeading.vue'
+import InvitationsSettings from '@/components/admin/InvitationsSettings.vue'
+import KitaExportCard from '@/components/admin/KitaExportCard.vue'
+import MembersSettings from '@/components/admin/MembersSettings.vue'
+import OrganizationSettingsForm from '@/components/admin/OrganizationSettingsForm.vue'
+import PrivacyContactSettings from '@/components/admin/PrivacyContactSettings.vue'
+import { Card, CardDescription, CardHeader } from '@/components/ui/card'
+import AdminLayout from '@/layouts/Admin.astro'
+import { privacyContactOf } from '@/lib/board/kita-link'
+import { findOrganizationName } from '@/lib/board/queries'
+import { longDate } from '@/lib/board/time'
+import { instanceMode } from '@/lib/instance'
+import { listMembers, listPendingInvitations } from '@/lib/organization-members'
+import { OWNER_ROLE } from '@/lib/organization-roles'
+
+// The middleware guarantees a session and an active Kita the user is a
+// member of
+const organizationId = Astro.locals.organizationId!
+const user = Astro.locals.user!
+// Whom parents ask about data protection: only the hosted instance, where
+// the Kita answers for its boards, has the setting
+const [name, memberRows, privacyContact] = await Promise.all([
+  findOrganizationName(organizationId),
+  listMembers(organizationId),
+  instanceMode.hosted ? privacyContactOf(organizationId) : undefined,
+])
+const members = memberRows.map((member) => ({
+  id: member.id,
+  name: member.name,
+  email: member.email,
+  owner: member.role === OWNER_ROLE,
+  self: member.userId === user.id,
+}))
+const self = members.find((member) => member.self)
+if (name === undefined || !self) return Astro.redirect('/admin')
+
+// Only the owner renames the Kita, sets its privacy contact, invites and
+// removes members — and only they get to see who has been invited. The server
+// checks each of these itself (src/lib/organization-roles.ts).
+const owner = self.owner
+const invitations = owner
+  ? (await listPendingInvitations(organizationId)).map((invitation) => ({
+      id: invitation.id,
+      email: invitation.email,
+      expires: longDate(invitation.expiresAt),
+    }))
+  : []
+---
+
+<AdminLayout
+  title="Kita-Einstellungen"
+  breadcrumbs={[{ label: 'Kita-Einstellungen' }]}
+>
+  <!-- Gap, not space-y: the cards are islands, and <astro-island> has
+       display: contents, so a margin on it goes nowhere -->
+  <div class="flex flex-col gap-6">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Kita-Einstellungen</h1>
+      <p class="mt-1 text-muted-foreground">Einstellungen für {name}.</p>
+    </div>
+    {owner ? (
+      <OrganizationSettingsForm
+        client:load
+        organizationId={organizationId}
+        name={name}
+      />
+    ) : (
+      <Card class="max-w-xl">
+        <CardHeader>
+          <CardHeading>Name</CardHeading>
+          <CardDescription>
+            Die Kita heißt „{name}“. Umbenennen kann sie nur die Inhaberin oder
+            der Inhaber.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )}
+    {privacyContact !== undefined && (
+      <PrivacyContactSettings
+        client:load
+        privacyContact={privacyContact}
+        canEdit={owner}
+      />
+    )}
+    {owner && (
+      <InvitationsSettings
+        client:load
+        organizationId={organizationId}
+        invitations={invitations}
+      />
+    )}
+    <MembersSettings
+      client:load
+      organizationId={organizationId}
+      organizationName={name}
+      members={members}
+      canManage={owner}
+    />
+    {/* Owner and admins alike, and also while the hosted instance has paused
+        the Kita (src/pages/admin/kita/export.ts) */}
+    <KitaExportCard client:load />
+  </div>
+</AdminLayout>

@@ -1,0 +1,53 @@
+---
+import NotePin from '@/components/board/NotePin.vue'
+import { ctaClass, primaryCtaClass } from '@/components/marketing/classes'
+import Section from '@/components/marketing/Section.astro'
+import { pricingTerms, type PricingFacts } from '@/lib/marketing/hosted-page'
+
+// The one plan of the hosted instance, on a white sheet: what a year costs,
+// what that includes, and how it is paid. Every number is the instance's
+// (hostedPricing).
+interface Props {
+  facts: PricingFacts
+  // What the operator adds to the price, e.g. about VAT (HOSTED_PRICE_NOTE).
+  // Empty: the page says nothing about it.
+  note?: string
+  // The way in, left out where nobody can sign up
+  cta?: { href: string; label: string }
+}
+
+const { facts, note, cta } = Astro.props
+---
+
+<Section id="preis" title="Ein Preis für eure Kita">
+  <div class="note-paper relative mt-8 grid gap-8 bg-white/80 px-6 pt-10 pb-8 sm:px-10 md:grid-cols-2 md:gap-12">
+    <NotePin color="bg-kirsche" />
+    <div>
+      <p class="text-tinte/80 text-sm font-semibold">Jahresabo</p>
+      <p class="mt-2 flex flex-wrap items-baseline gap-x-3">
+        <span class="font-display text-5xl leading-normal">
+          {facts.priceEur} €
+        </span>
+        <span class="text-xl font-bold">im Jahr</span>
+      </p>
+      <p class="mt-1 text-lg leading-relaxed font-semibold">
+        {facts.included}, {facts.extra}
+      </p>
+      {note && <p class="text-tinte/80 mt-2 text-sm wrap-anywhere">{note}</p>}
+      {cta && (
+        <a
+          href={cta.href}
+          class:list={[ctaClass, primaryCtaClass, 'mt-6 inline-block']}
+        >
+          {cta.label}
+        </a>
+      )}
+    </div>
+    <ul class="list-disc space-y-2 pl-5 text-lg leading-relaxed">
+      <li>{facts.trial}</li>
+      {pricingTerms.map((term) => (
+        <li>{term}</li>
+      ))}
+    </ul>
+  </div>
+</Section>

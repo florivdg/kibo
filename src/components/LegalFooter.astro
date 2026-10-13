@@ -1,0 +1,47 @@
+---
+import LegalLinks from '@/components/LegalLinks.astro'
+import type { KitaResponsibility } from '@/lib/board/privacy-contact'
+
+interface Props {
+  // The pages of a Kita link on the hosted instance: the Kita answers for its
+  // boards, and parents learn whom to ask (kitaResponsibility in
+  // src/lib/board/queries.ts). The privacy policy below is the operator's.
+  responsible?: KitaResponsibility | undefined
+}
+
+const { responsible } = Astro.props
+
+// Faded through the text colour rather than opacity, which stays readable
+// (5.5:1 on the felt).
+//
+// Without `responsible` the markup stays what it was before the line existed,
+// byte for byte (the start page without HOSTED must not change): that branch
+// renders only the links, where `{responsible && …}` in front of them would
+// leave a second space behind. The links are a component of their own because
+// Prettier puts any expression next to a <nav> on a line of its own.
+---
+
+<footer class="text-current/80 px-4 py-6 text-center text-sm">
+  {responsible ? (
+    <>
+      <p class="mb-3 wrap-anywhere">
+        Verantwortlich für die Bretter: {responsible.kitaName}
+        {responsible.contact && (
+          <>
+            {' '}
+            <span aria-hidden="true">·</span> Fragen zum Datenschutz:{' '}
+            <a
+              class="underline underline-offset-4 hover:no-underline"
+              href={responsible.contact.href}
+            >
+              {responsible.contact.label}
+            </a>
+          </>
+        )}
+      </p>
+      <LegalLinks />
+    </>
+  ) : (
+    <LegalLinks />
+  )}
+</footer>

@@ -1,0 +1,73 @@
+---
+import CardHeading from '@/components/admin/CardHeading.vue'
+import { Badge } from '@/components/ui/badge'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from '@/components/ui/card'
+import { dateAndTime } from '@/lib/board/time'
+
+// The copy of a reported note the server kept with its case, on the page of
+// the case (src/pages/admin/reports/[id].astro)
+interface Props {
+  categoryLabel: string
+  title: string
+  body: string
+  author: string
+  contact: string | null
+  createdAt: Date
+  expiresAt: Date
+  firstReportedAt: Date
+  // Still on the board: not taken down, not run out
+  hanging: boolean
+}
+
+const {
+  categoryLabel,
+  title,
+  body,
+  author,
+  contact,
+  createdAt,
+  expiresAt,
+  firstReportedAt,
+  hanging,
+} = Astro.props
+
+const facts = [
+  { label: 'Angepinnt von', value: author },
+  ...(contact ? [{ label: 'Kontakt', value: contact }] : []),
+  { label: 'Angepinnt am', value: dateAndTime(createdAt) },
+  { label: 'Läuft ab', value: dateAndTime(expiresAt) },
+]
+const where = hanging
+  ? 'Er hängt noch und ist für alle mit dem Link sichtbar.'
+  : 'Er hängt nicht mehr: abgenommen, entfernt oder abgelaufen.'
+---
+
+<Card>
+  <CardHeader>
+    <CardHeading>Gemeldeter Zettel</CardHeading>
+    <CardDescription>
+      So hing der Zettel am {dateAndTime(firstReportedAt)} auf dem Brett, als er
+      zum ersten Mal gemeldet wurde. {where}
+    </CardDescription>
+  </CardHeader>
+  <CardContent class="grid gap-4">
+    <div>
+      <Badge variant="secondary">{categoryLabel}</Badge>
+      <p class="mt-2 font-medium wrap-anywhere">{title}</p>
+      <p class="mt-1 whitespace-pre-line wrap-anywhere">{body}</p>
+    </div>
+    <dl class="grid gap-3 text-sm sm:grid-cols-2">
+      {facts.map(({ label, value }) => (
+        <div>
+          <dt class="text-muted-foreground">{label}</dt>
+          <dd class="wrap-anywhere">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  </CardContent>
+</Card>

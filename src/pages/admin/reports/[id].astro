@@ -1,0 +1,95 @@
+---
+import ClosedCaseCard from '@/components/admin/reports/ClosedCaseCard.astro'
+import ReportCaseActions from '@/components/admin/reports/ReportCaseActions.vue'
+import ReportedNoteCard from '@/components/admin/reports/ReportedNoteCard.astro'
+import ReportListCard from '@/components/admin/reports/ReportListCard.astro'
+import NotFound from '@/components/NotFound.astro'
+import AdminLayout from '@/layouts/Admin.astro'
+import { longDate } from '@/lib/board/time'
+import { caseAccess } from '@/lib/reports/access'
+import { settleAccess } from '@/lib/reports/page-access'
+import { reportCasePath, REPORTS_PATH } from '@/lib/reports/paths'
+import { findCase } from '@/lib/reports/queries'
+
+// One reported note: the copy the server kept when it was first reported,
+// every report of it, and what the team decided. The link in the mail leads
+// here and may name a case of another Kita than the active one: the page
+// switches to that Kita for whoever handles its reports, and answers like an
+// address that doesn't exist for everyone else.
+//
+// The middleware guarantees a session and an active Kita of the user's
+const user = Astro.locals.user!
+const organizationId = Astro.locals.organizationId!
+const caseId = Astro.params.id ?? ''
+
+const access = await settleAccess(
+  await caseAccess(caseId, user.id, organizationId),
+  Astro.request,
+)
+if (access === 'reload') return Astro.redirect(reportCasePath(caseId))
+
+const now = new Date()
+const found =
+  access === 'show' ? await findCase(organizationId, caseId, now) : undefined
+if (!found) {
+  Astro.response.status = 404
+  Astro.response.statusText = 'Not Found'
+}
+
+const deletesOn = found ? longDate(found.deletesAt) : ''
+const reportCount =
+  found?.reportCount === 1 ? '1 Meldung' : `${found?.reportCount} Meldungen`
+---
+
+{found ? (
+  <AdminLayout
+    title={`Meldung: ${found.noteTitle}`}
+    breadcrumbs={[
+      { label: 'Meldungen', href: REPORTS_PATH },
+      { label: found.noteTitle },
+    ]}
+  >
+    <div class="grid max-w-3xl gap-6">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight wrap-anywhere">
+          {found.noteTitle}
+        </h1>
+        <p class="mt-1 text-muted-foreground">
+          Gemeldet auf dem Brett „{found.boardName}“ · {reportCount}
+        </p>
+      </div>
+      <ReportedNoteCard
+        categoryLabel={found.categoryLabel}
+        title={found.noteTitle}
+        body={found.noteBody}
+        author={found.noteAuthor}
+        contact={found.noteContact}
+        createdAt={found.noteCreatedAt}
+        expiresAt={found.noteExpiresAt}
+        firstReportedAt={found.firstReportedAt}
+        hanging={found.hanging}
+      />
+      <ReportListCard reports={found.reports} reportCount={found.reportCount} />
+      {found.status === 'open' ? (
+        <ReportCaseActions
+          client:load
+          caseId={found.id}
+          noteTitle={found.noteTitle}
+          hanging={found.hanging}
+        />
+      ) : (
+        <ClosedCaseCard
+          closedAt={found.closedAt}
+          closedByName={found.closedByName}
+          closedByOperator={found.closedByOperator}
+          resolution={found.resolution}
+        />
+      )}
+      <p class="text-sm text-muted-foreground">
+        Dieser Fall wird am {deletesOn} gelöscht.
+      </p>
+    </div>
+  </AdminLayout>
+) : (
+  <NotFound />
+)}

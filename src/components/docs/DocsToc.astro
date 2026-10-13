@@ -1,0 +1,31 @@
+---
+import type { MarkdownHeading } from 'astro'
+
+import { FOCUS_RING_TIGHT } from '@/components/docs/focus-ring'
+
+// "Auf dieser Seite": the headings below the page's title. Like the sidebar
+// it is rendered twice by the layout and brings no layout of its own.
+interface Props {
+  headings: MarkdownHeading[]
+}
+
+const { headings } = Astro.props
+---
+
+<nav aria-label="Auf dieser Seite">
+  <ul class="space-y-1.5 text-sm leading-snug">
+    {headings.map((heading) => (
+      <li class:list={[heading.depth === 3 && 'pl-4']}>
+        <a
+          href={`#${heading.slug}`}
+          class:list={[
+            'text-tinte/80 hover:text-tinte underline-offset-4 hover:underline',
+            FOCUS_RING_TIGHT,
+          ]}
+        >
+          {heading.text}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

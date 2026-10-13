@@ -1,0 +1,63 @@
+---
+import CardHeading from '@/components/admin/CardHeading.vue'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from '@/components/ui/card'
+import { kitaCount } from '@/lib/hosted/billing'
+import type { PriceBreakdown } from '@/lib/hosted/pricing'
+
+// What the account owes for a year and how that comes about: the base price
+// with the Kitas it includes, and what each Kita beyond them adds. The
+// numbers are the instance's (hostedPricing).
+interface Props {
+  // The Kitas the account owns, by name
+  kitas: string[]
+  price: PriceBreakdown
+  // False for an account that is free for good
+  billed: boolean
+  // What the operator adds to the price, e.g. about VAT (HOSTED_PRICE_NOTE).
+  // Empty: the card says nothing about it.
+  note?: string
+}
+
+const { kitas, price, billed, note } = Astro.props
+
+const included = kitaCount(price.includedKitas)
+const owned = kitas.length ? `${kitas.length} (${kitas.join(', ')})` : '0'
+const extra = price.extraKitas
+  ? `${price.extraKitaEur} € im Jahr – derzeit ${price.extraKitas} × ${price.extraKitaEur} € = ${price.extraEur} €`
+  : `${price.extraKitaEur} € im Jahr`
+const total = billed ? `${price.totalEur} €` : '0 € (dauerhaft freigeschaltet)'
+---
+
+<Card class="max-w-xl">
+  <CardHeader>
+    <CardHeading>Kitas und Jahresbetrag</CardHeading>
+    <CardDescription>
+      Abgerechnet wird das Konto, nicht die einzelne Kita. Kitas, in die Sie
+      eingeladen wurden, zählen nicht mit.
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+      <dt class="text-muted-foreground">Eigene Kitas</dt>
+      <dd>{owned}</dd>
+      <dt class="text-muted-foreground">Grundpreis</dt>
+      <dd>{`${price.baseEur} € im Jahr, inklusive ${included}`}</dd>
+      <dt class="text-muted-foreground">Jede weitere Kita</dt>
+      <dd>{extra}</dd>
+      <dt class="font-medium">Jahresbetrag</dt>
+      <dd class="font-medium" data-yearly-price>
+        {total}
+      </dd>
+    </dl>
+    {note && (
+      <p class="mt-4 text-sm text-muted-foreground" data-price-note>
+        {note}
+      </p>
+    )}
+  </CardContent>
+</Card>

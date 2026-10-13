@@ -1,0 +1,11 @@
+---
+import NotFound from '@/components/NotFound.astro'
+import UnknownLink from '@/components/board/UnknownLink.astro'
+import { isKitaPath } from '@/lib/board/paths'
+
+// An address under /k/ came from a Kita link handed to parents and gets the
+// page that says what to do about it (src/components/board/UnknownLink.astro);
+// everything else the plain one
+---
+
+{isKitaPath(Astro.url.pathname) ? <UnknownLink /> : <NotFound />}

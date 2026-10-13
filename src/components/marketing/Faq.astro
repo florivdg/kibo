@@ -1,0 +1,26 @@
+---
+import Section from '@/components/marketing/Section.astro'
+import type { FaqEntry } from '@/lib/marketing/hosted-page'
+
+// The questions a Kita asks before it signs up, each a <details> the browser
+// opens and closes on its own: no script, and the keyboard works as it does
+// everywhere. The same entries make the FAQPage of the structured data.
+interface Props {
+  entries: readonly FaqEntry[]
+}
+
+const { entries } = Astro.props
+---
+
+<Section id="faq" title="Häufige Fragen">
+  <div class="mt-8 max-w-3xl space-y-4">
+    {entries.map((entry) => (
+      <details class="note-paper bg-white/70 px-5 py-4">
+        <summary class="focus-visible:outline-tinte cursor-pointer text-lg font-bold focus-visible:outline-3 focus-visible:outline-offset-3">
+          {entry.question}
+        </summary>
+        <p class="mt-3 leading-relaxed">{entry.answer}</p>
+      </details>
+    ))}
+  </div>
+</Section>

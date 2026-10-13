@@ -1,0 +1,43 @@
+---
+import { Image } from 'astro:assets'
+
+import NotePin from '@/components/board/NotePin.vue'
+import ExternalLink from '@/components/marketing/ExternalLink.astro'
+import Section from '@/components/marketing/Section.astro'
+import { AUTHOR_PHOTO } from '@/lib/images/responsive'
+import { author } from '@/lib/marketing/hosted-page'
+import photo from '@/assets/marketing/florian-576.webp'
+
+// Who develops Kibo. That is the software's author, not necessarily who runs
+// this instance — the footer names the operator. The photo comes in the sizes
+// listed in src/lib/images/responsive.ts; `sizes` is the class below — 10rem,
+// from `sm` (40rem) 12rem —, so the browser picks the file for its screen.
+---
+
+<Section id="wer-kibo-macht" title="Wer Kibo macht">
+  <div class="note-paper bg-sonne relative mt-8 flex max-w-3xl -rotate-[0.4deg] flex-col gap-6 px-6 pt-10 pb-6 sm:flex-row sm:items-center">
+    <NotePin color="bg-kirsche" />
+    <Image
+      src={photo}
+      alt={author.name}
+      width={192}
+      height={192}
+      widths={AUTHOR_PHOTO.widths}
+      sizes="(min-width: 40rem) 12rem, 10rem"
+      loading="lazy"
+      class="mx-auto size-40 shrink-0 rounded-sm object-cover sm:mx-0 sm:size-48"
+    />
+    <div>
+      <p class="text-lg leading-relaxed">
+        Kibo kommt von {author.name}, Webentwickler aus Bayreuth, verheiratet
+        und Vater von zwei Kindern. Er baut Webanwendungen mit Vue, Astro und
+        TypeScript – und Kibo als freie Software.
+      </p>
+      <p class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-lg">
+        <ExternalLink href={author.url}>flori.dev</ExternalLink>
+        <ExternalLink href={author.github}>GitHub</ExternalLink>
+        <ExternalLink href={author.mastodon}>Mastodon</ExternalLink>
+      </p>
+    </div>
+  </div>
+</Section>
