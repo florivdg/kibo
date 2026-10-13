@@ -184,7 +184,7 @@ Kibo steht unter der GNU Affero General Public License (`AGPL-3.0-only`).
 Deshalb zeigt jede Instanz auf ihren Quelltext: Am Fuß jeder Seite – auf den
 Brettern, der Startseite, den Anmeldeseiten, im Admin-Bereich und in der
 Dokumentation – steht neben Impressum und Datenschutz der Link „Quelltext“,
-dahinter die Version, die läuft (zum Beispiel `v1.2.1`).
+dahinter die Version, die läuft (zum Beispiel `v1.2.2`).
 
 Wer Kibo unverändert aus den veröffentlichten Images betreibt, muss nichts
 tun: Der Link führt auf das Repository. Wer eine **geänderte Fassung** als

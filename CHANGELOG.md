@@ -9,6 +9,36 @@ Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
 Bis 1.2.1 entstand Kibo in einem privaten Repository; die Einträge bis dahin
 verweisen deshalb auf keine Commits.
 
+## 1.2.2 – 2026-10-13
+
+### Geändert
+
+- **Öffentliches Repository:** Kibo liegt jetzt öffentlich unter
+  [github.com/florivdg/kibo](https://github.com/florivdg/kibo), und die Images
+  auf GHCR sind öffentlich – zum Herunterladen braucht es kein
+  `docker login` mehr.
+- **Dokumentation:** Der gehostete Modus (`HOSTED=true`) ist der Betrieb des
+  Projekts selbst und wird nicht mehr als Anleitung zum Nachbauen
+  beschrieben; die Seite „Gehosteter Betrieb“ und die Vorlagen für AGB und
+  AV-Vertrag sind entfernt. Die Vorlagen für Impressum und
+  Datenschutzerklärung enthalten nur noch die Fassung für den eigenen
+  Betrieb.
+- **Changelog und README** durchgehend auf Deutsch; das README nennt Passkeys,
+  Meldungen und den Datenexport.
+- Abhängigkeiten aktualisiert, u. a. Astro 7.3.8, @astrojs/node 11.1.7,
+  Vue 3.5.44, drizzle-orm 0.45.4 und nodemailer 10.1.0; `@types/k6` passt
+  jetzt zur k6-Version 2.3.0 des Lasttest-Images.
+
+### Sicherheit
+
+- devalue 5.9.3 behebt die Befunde, die `bun audit` meldete. devalue nutzen
+  nur die Lasttests; im App-Image steckt diese Fassung nicht.
+
+### Hinweise zum Update
+
+- Keine Migration und keine neuen Variablen. Wer sich für die Images bei
+  GHCR angemeldet hat, kann `docker logout ghcr.io` ausführen.
+
 ## 1.2.1 – 2026-10-13
 
 ### Geändert

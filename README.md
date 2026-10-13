@@ -2,7 +2,7 @@
 
 Kibo (**Ki**ta-**Bo**ard) ist eine digitale Pinnwand, auf der sich die Eltern einer Kita selbst austauschen: gefunden, gesucht, zu verschenken. Die Kita-Leitung legt Bretter an und teilt sie über einen nicht erratbaren Link oder QR-Code; wer den Link hat, pinnt dort Zettel an – im Browser, ohne Konto und ohne Messenger-Gruppe.
 
-Aktuelle Version: **1.2.1** – Änderungen stehen im [CHANGELOG](CHANGELOG.md).
+Aktuelle Version: **1.2.2** – Änderungen stehen im [CHANGELOG](CHANGELOG.md).
 
 ![Eine Pinnwand in Kibo: Hinweise, Fragen und Termine als farbige Zettel auf einer Filzwand](docs/screenshots/board-pinnwand.webp)
 
@@ -93,7 +93,7 @@ Images: `ghcr.io/florivdg/kibo` (App) und `ghcr.io/florivdg/kibo-migrate` (Migra
 
 | Tag                    | Stand                                                |
 | :--------------------- | :--------------------------------------------------- |
-| `1.2.1`, `1.2`         | eine Version (Git-Tag `v1.2.1`) – für den Betrieb    |
+| `1.2.2`, `1.2`         | eine Version (Git-Tag `v1.2.2`) – für den Betrieb    |
 | `latest`               | die neueste Version, nie ein Entwicklungsstand       |
 | `main`, `sha-<commit>` | Entwicklungsstände von `main`, nicht für den Betrieb |
 
