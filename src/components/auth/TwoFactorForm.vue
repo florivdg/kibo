@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useFormSubmit } from '@/composables/use-form-submit'
 import { authClient } from '@/lib/auth-client'
+import { settleCodeCheck } from '@/lib/code-check'
 import { fieldAria } from '@/lib/field-aria'
 
 const props = defineProps<{ redirectTo: string }>()
@@ -33,18 +34,25 @@ const errorId = useId()
 const hintId = useId()
 
 async function submit() {
+  const sent = code.value
+  const backup = useBackupCode.value
   // Backup codes get copied from a file or a note, spaces and all
-  const payload = { code: code.value.trim(), trustDevice: trustDevice.value }
+  const payload = { code: sent.trim(), trustDevice: trustDevice.value }
   // The input completes on the sixth digit, also while a request is running;
   // run drops that second call without an error, so the code stays
   const ok = await run(
     () =>
-      useBackupCode.value
+      backup
         ? authClient.twoFactor.verifyBackupCode(payload)
         : authClient.twoFactor.verifyTotp(payload),
     { leave: { href: props.redirectTo } },
   )
-  if (!ok && error.value) code.value = ''
+  settleCodeCheck(
+    !!ok,
+    error,
+    code,
+    code.value === sent && useBackupCode.value === backup,
+  )
 }
 
 function toggleMethod() {

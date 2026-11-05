@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { useFormSubmit } from '@/composables/use-form-submit'
 import { authClient } from '@/lib/auth-client'
 import { downloadText } from '@/lib/clipboard'
+import { settleCodeCheck } from '@/lib/code-check'
 import { fieldAria } from '@/lib/field-aria'
 import { qrCodeSvg } from '@/lib/qr-code'
 
@@ -65,13 +66,13 @@ async function confirm() {
     )
     return
   }
+  const sent = code.value
   // The input completes on the sixth digit, also while a request is running;
   // run drops that second call without an error, so the code stays
-  const ok = await run(
-    () => authClient.twoFactor.verifyTotp({ code: code.value }),
-    { leave: { reload: true } },
-  )
-  if (!ok && error.value) code.value = ''
+  const ok = await run(() => authClient.twoFactor.verifyTotp({ code: sent }), {
+    leave: { reload: true },
+  })
+  settleCodeCheck(!!ok, error, code, code.value === sent)
 }
 </script>
 
