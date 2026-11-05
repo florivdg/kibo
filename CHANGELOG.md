@@ -9,6 +9,29 @@ Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
 Bis 1.2.1 entstand Kibo in einem privaten Repository; die Einträge bis dahin
 verweisen deshalb auf keine Commits.
 
+## 1.2.4 – 2026-11-05
+
+[Änderungen seit 1.2.3](https://github.com/florivdg/kibo/compare/v1.2.3...v1.2.4)
+
+### Behoben
+
+- **Bestätigung in zwei Schritten:** Ein abgelehnter Code wurde immer wieder
+  an den Server geschickt, bis die Anmeldung wegen zu vieler Versuche
+  gesperrt war – bei der Anmeldung und beim Einrichten auf der Kontoseite.
+  Jetzt geht jeder Code genau einmal hinaus; ein abgelehnter wird geleert.
+  Der Fehler steckte schon in 1.2.2.
+- **Codefeld und Content-Security-Policy:** Das Codefeld wollte seine Regeln
+  als Inline-Stil einfügen, den die CSP blockiert – im Browser stand eine
+  CSP-Meldung, und Auswahl- und Autofill-Farben des unsichtbaren
+  Eingabefelds konnten durchscheinen. Die Regeln liegen jetzt im eigenen
+  Stylesheet.
+- Eine Antwort des Servers, die erst ankommt, nachdem schon ein anderer Code
+  oder ein Backup-Code eingegeben wurde, löscht diese Eingabe nicht mehr.
+
+### Hinweise zum Update
+
+- Keine Migration und keine neuen Variablen.
+
 ## 1.2.3 – 2026-11-05
 
 [Änderungen seit 1.2.2](https://github.com/florivdg/kibo/compare/v1.2.2...v1.2.3)
