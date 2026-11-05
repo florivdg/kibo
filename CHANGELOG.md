@@ -9,6 +9,35 @@ Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
 Bis 1.2.1 entstand Kibo in einem privaten Repository; die Einträge bis dahin
 verweisen deshalb auf keine Commits.
 
+## 1.2.3 – 2026-11-05
+
+[Änderungen seit 1.2.2](https://github.com/florivdg/kibo/compare/v1.2.2...v1.2.3)
+
+### Geändert
+
+- Abhängigkeiten aktualisiert, u. a. Astro 7.4.6, @astrojs/node 11.1.10,
+  @astrojs/vue 7.1.2, Vue 3.5.45, better-auth 1.7.18 (mit
+  `@better-auth/core` und `@better-auth/passkey`), nodemailer 10.3.1 und
+  Tailwind CSS 4.3.4. Die Lasttests nutzen jetzt devalue 6, wie Astro 7.4.
+
+### Sicherheit
+
+- Behebt alle Befunde, die `bun audit` meldete (4 hoch, 9 mittel, 4 niedrig):
+  - **nodemailer 10.3.1:** Der Adressparser konnte Anzeigetext in eine
+    Empfängeradresse verwandeln oder an eine andere Domain zustellen als die,
+    die in der Kopfzeile steht (Fehler in Gruppen, Kommentaren und
+    Anführungszeichen). Kibo verschickt jede Mail über nodemailer.
+  - **undici 8.12.4** (über Astro): mehrere Befunde, darunter umgehbare
+    TLS-Zertifikatsprüfung und Denial of Service.
+  - **fast-uri 3.1.9** (über `@astrojs/check`): Fehler beim Zerlegen und
+    Normalisieren von URIs.
+  - **fallow 3.39.0:** Das Analysewerkzeug konnte Dateien außerhalb des
+    Projekts lesen. Es läuft nur in der Entwicklung, nicht im Image.
+
+### Hinweise zum Update
+
+- Keine Migration und keine neuen Variablen.
+
 ## 1.2.2 – 2026-10-13
 
 ### Geändert
