@@ -87,6 +87,10 @@ export const ACCOUNT_NAME_MAX = 80
 export const PASSWORD_MIN_LENGTH = 12
 export const PASSWORD_MAX_LENGTH = 128
 
+// How long a link to set the password is good for: Better Auth's reset links
+// and the ones a confirmation leads to (src/lib/password-setup.ts) alike
+export const RESET_PASSWORD_TOKEN_TTL_S = 60 * 60
+
 // Passkeys of one account (src/lib/passkeys/): a phone, a laptop, a security
 // key or two for each person who shares the account's devices — more is a
 // script. The name is what the account page shows; it is optional.

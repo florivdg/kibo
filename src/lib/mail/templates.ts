@@ -179,7 +179,7 @@ export function verificationMail(name: string, url: string) {
   return render(name, {
     subject: 'Bestätigen Sie Ihre E-Mail-Adresse für Kibo',
     intro:
-      'willkommen bei Kibo! Bestätigen Sie bitte Ihre E-Mail-Adresse, um sich anmelden zu können.',
+      'willkommen bei Kibo! Bestätigen Sie bitte Ihre E-Mail-Adresse. Danach legen Sie Ihr Passwort fest.',
     link: tokenLink('E-Mail-Adresse bestätigen', url),
   })
 }

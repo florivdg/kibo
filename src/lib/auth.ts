@@ -1,4 +1,7 @@
-import { defineRequestState } from '@better-auth/core/context'
+import {
+  defineRequestState,
+  getCurrentAuthEndpointContext,
+} from '@better-auth/core/context'
 import { drizzleAdapter } from '@better-auth/drizzle-adapter'
 import { BETTER_AUTH_SECRET, BETTER_AUTH_URL } from 'astro:env/server'
 import { betterAuth } from 'better-auth'
@@ -10,9 +13,9 @@ import {
 
 import { db } from '@/db'
 import { assertAccountName } from '@/lib/account-rules'
-import { linkErrorRedirect } from '@/lib/admin-redirect'
+import { isAdminRedirect, linkErrorRedirect } from '@/lib/admin-redirect'
 import { authOptions, authPlugins } from '@/lib/auth-options'
-import { invitationPath } from '@/lib/auth-paths'
+import { invitationPath, passwordSetupPath } from '@/lib/auth-paths'
 import { findOrganizationName } from '@/lib/board/queries'
 import { errorMessage } from '@/lib/error-message'
 import {
@@ -52,6 +55,12 @@ import {
   passkeyTransaction,
   withPasskeyTransactions,
 } from '@/lib/passkeys/transactions'
+import {
+  confirmEmailOnReset,
+  dropPasswordAndSessions,
+  forgetResetTokens,
+  passwordSetupToken,
+} from '@/lib/password-setup'
 import { looksLikeLink } from '@/lib/plain-text'
 import {
   assertEmailDomainAllowed,
@@ -68,6 +77,7 @@ import { trustedProxies } from '@/lib/trusted-proxies'
 import {
   EMAIL_CHANGE_DONE_CALLBACK,
   isEmailChangeVerification,
+  verifiedSignUpConfirmation,
   withCallbackURL,
 } from '@/lib/verification-token'
 
@@ -103,17 +113,82 @@ function logSendFailure(error: unknown) {
 
 type HookContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0]
 
+// The query of a request to an auth route, whatever Better Auth parsed
+function queryOf(ctx: {
+  query?: Record<string, unknown>
+}): Record<string, unknown> {
+  return ctx.query ?? {}
+}
+
+// Better Auth lets a callback through whose origin is ours once normalised,
+// then rebuilds a rejected link's redirect from the normalised path:
+// '/admin/..//evil.example' with a bad token answers 'Location:
+// //evil.example?error=…', which the browser reads as another host. Every
+// callback Kibo puts into its links is an admin path as it stands, so
+// anything else goes to the admin area as a rejected link before Better Auth
+// looks at the token. An empty one counts as none, as it does for Better Auth.
+function requireAdminCallback(ctx: HookContext) {
+  const { callbackURL } = queryOf(ctx)
+  if (!callbackURL || isAdminRedirect(callbackURL)) return
+  throw ctx.redirect(linkErrorRedirect(callbackURL, 'INVALID_TOKEN'))
+}
+
 // The last link of an address change signs in whoever opens it when there is
 // no session yet — past the password and TOTP, which is exactly what the
 // sign-up link deliberately doesn't do. Turn it away unless the browser is
 // already signed in; the account page then asks to open it again.
 async function requireSessionForEmailChange(ctx: HookContext) {
-  const query: Record<string, unknown> = ctx.query ?? {}
+  const query = queryOf(ctx)
   if (!isEmailChangeVerification(query.token)) return
   if (await getSessionFromCtx(ctx)) return
   throw ctx.redirect(
     linkErrorRedirect(query.callbackURL, 'EMAIL_CHANGE_NEEDS_SESSION'),
   )
+}
+
+// A setup token for the confirmation's account, if it is due one; a failure
+// is logged and leaves the link where Better Auth sent it
+async function setupTokenFor(
+  confirmation: Parameters<typeof passwordSetupToken>[0],
+): Promise<string | undefined> {
+  try {
+    return await passwordSetupToken(confirmation)
+  } catch (error) {
+    console.error(
+      `[auth] Link zum Festlegen des Passworts nicht erzeugt: ${errorMessage(error)}`,
+    )
+    return undefined
+  }
+}
+
+// On to setting the password (src/lib/password-setup.ts). Decided by the
+// account's state, not by what Better Auth did in this request: a link opened
+// again (or by a mail scanner first) still leads to a fresh form.
+async function startPasswordSetup(ctx: HookContext) {
+  const confirmation = await verifiedSignUpConfirmation(
+    queryOf(ctx).token,
+    ctx.context.secret,
+  )
+  if (!confirmation) return
+  const token = await setupTokenFor(confirmation)
+  if (token) throw ctx.redirect(passwordSetupPath(token))
+}
+
+// Better Auth's beforeEmailVerification: the account loses whatever password
+// it has before its address counts as confirmed. One whose sign-up hasn't
+// stored its credential yet (dropPasswordAndSessions in
+// src/lib/password-setup.ts explains the race) isn't confirmed: the link goes
+// back to its page like a used one, which offers a new link and "Passwort
+// vergessen". A redirect, so Better Auth neither confirms the address nor
+// logs anything.
+async function confirmWithoutPassword(user: { id: string }) {
+  if ((await dropPasswordAndSessions(user.id)) === 'confirmable') return
+  throw new APIError('FOUND', undefined, {
+    Location: linkErrorRedirect(
+      queryOf(getCurrentAuthEndpointContext()).callbackURL,
+      'INVALID_TOKEN',
+    ),
+  })
 }
 
 function badRequest(code: string, message: string) {
@@ -173,16 +248,20 @@ async function checkPasskeyRegistration(ctx: HookContext) {
 // A reset is how a stolen account is taken back. Whoever added a passkey
 // knew the password, and a passkey that survived the reset would let them
 // straight back in; the owner adds theirs again in a few seconds. Better Auth
-// calls this after storing the new password and before ending the sessions.
+// calls this after storing the new password and ending the sessions.
 // transactions.ts wraps that whole endpoint in one transaction under the
-// user's row lock, also taken by passkey registration and authentication.
-// A failure rolls back the password, token consumption and cleanup together.
-async function removePasskeysOnReset({ user }: { user: { id: string } }) {
+// user's row lock (lockUser), so a failure rolls back the password, token
+// consumption and cleanup together. The reset also voids the account's other
+// reset and setup links and confirms the address (src/lib/password-setup.ts).
+async function finishPasswordReset({ user }: { user: { id: string } }) {
+  const on = (await passkeyTransaction.get()) ?? db
   try {
-    await deletePasskeysOf(user.id, (await passkeyTransaction.get()) ?? db)
+    await deletePasskeysOf(user.id, on)
+    await forgetResetTokens(user.id, on)
+    await confirmEmailOnReset(user.id, on)
   } catch (error) {
     console.error(
-      `[auth] Passkeys beim Zurücksetzen nicht gelöscht: ${errorMessage(error)}`,
+      `[auth] Zurücksetzen des Passworts nicht abgeschlossen: ${errorMessage(error)}`,
     )
     throw error
   }
@@ -442,7 +521,7 @@ async function startSubscription(
 // looks at the name or at accounts, so its answer never depends on whether
 // an account exists.
 const BEFORE_HOOKS: Record<string, ((ctx: HookContext) => unknown)[]> = {
-  '/verify-email': [requireSessionForEmailChange],
+  '/verify-email': [requireAdminCallback, requireSessionForEmailChange],
   '/delete-user': [requirePassword],
   '/sign-in/email': [limitSignInPerAccount],
   '/sign-up/email': [checkSignupPolicy, checkAccountName],
@@ -451,6 +530,12 @@ const BEFORE_HOOKS: Record<string, ((ctx: HookContext) => unknown)[]> = {
   '/organization/create': [checkKitaCreation],
   '/organization/invite-member': [checkInvitationRequest],
   '/passkey/verify-registration': [checkPasskeyRegistration],
+}
+
+// What runs after Better Auth answered, by path: it can still replace the
+// answer by throwing a redirect
+const AFTER_HOOKS: Record<string, ((ctx: HookContext) => unknown)[]> = {
+  '/verify-email': [startPasswordSetup],
 }
 
 // Same trust boundary the note budgets use (src/lib/spam/client-ip.ts).
@@ -476,8 +561,8 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     // A reset is how a stolen account is taken back; end its other sessions
     revokeSessionsOnPasswordReset: true,
-    // … and its passkeys, before the sessions go
-    onPasswordReset: removePasskeysOnReset,
+    // … and its passkeys; the reset also confirms the address
+    onPasswordReset: finishPasswordReset,
     sendResetPassword: ({ user, url }, request) =>
       sendUnlessFlooded(
         'reset',
@@ -526,6 +611,8 @@ export const auth = betterAuth({
     // a session straight from the link, past the password and past TOTP. Anyone
     // who can read the mailbox of an account that is 2FA-protected but not yet
     // verified would be signed in as them. Verifying only unlocks the login.
+    // Nor does it keep the sign-up's password: src/lib/password-setup.ts.
+    beforeEmailVerification: confirmWithoutPassword,
     // Also sends the second step of an address change; `user.email` is the
     // new address then
     sendVerificationEmail: ({ user, url, token }, request) => {
@@ -580,6 +667,9 @@ export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       for (const hook of BEFORE_HOOKS[ctx.path] ?? []) await hook(ctx)
+    }),
+    after: createAuthMiddleware(async (ctx) => {
+      for (const hook of AFTER_HOOKS[ctx.path] ?? []) await hook(ctx)
     }),
   },
   databaseHooks: {

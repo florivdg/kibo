@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 import CardHeading from '@/components/admin/CardHeading.vue'
-import EmailPasswordFields from '@/components/auth/EmailPasswordFields.vue'
+import EmailField from '@/components/auth/EmailField.vue'
 import FormError from '@/components/auth/FormError.vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,7 +11,12 @@ import {
   CardDescription,
   CardHeader,
 } from '@/components/ui/card'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { useFormSubmit } from '@/composables/use-form-submit'
 import { authClient } from '@/lib/auth-client'
@@ -24,19 +29,30 @@ const props = defineProps<{ invitation?: { id: string; email: string } }>()
 
 const name = ref('')
 const email = ref(props.invitation?.email ?? '')
-const password = ref('')
 const { error, pending, run } = useFormSubmit()
 
+// Better Auth wants a password with every sign-up; the account's real one is
+// set after confirming (src/lib/password-setup.ts). 32 random bytes as 64 hex
+// characters, within PASSWORD_MIN_LENGTH and PASSWORD_MAX_LENGTH, never shown
+// to anyone. getRandomValues, since randomUUID needs a secure context.
+function throwawayPassword() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32))
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
+    '',
+  )
+}
+
 async function submit() {
-  // Signing up doesn't sign the user in. Confirming the address only unlocks
-  // the login; the Kita is created afterwards, on /admin/organizations/new —
-  // or, with an invitation waiting, the login leads to the invitation.
+  // Signing up doesn't sign the user in. Confirming the address leads to
+  // setting the password, and that to the login; the Kita is created
+  // afterwards, on /admin/organizations/new — or, with an invitation
+  // waiting, the login leads to the invitation.
   // Better Auth takes further keys in the body and ignores the ones it
   // doesn't know; as a variable, because its type doesn't list this one.
   const body = {
     name: name.value,
     email: email.value,
-    password: password.value,
+    password: throwawayPassword(),
     callbackURL: VERIFY_EMAIL_CALLBACK,
     invitationId: props.invitation?.id,
   }
@@ -68,12 +84,11 @@ async function submit() {
             <FieldLabel for="name">Ihr Name</FieldLabel>
             <Input id="name" v-model="name" autocomplete="name" required />
           </Field>
-          <EmailPasswordFields
-            v-model:email="email"
-            v-model:password="password"
-            new-password
-            :email-readonly="!!invitation"
-          />
+          <EmailField v-model="email" :readonly="!!invitation" />
+          <FieldDescription>
+            Ihr Passwort legen Sie fest, sobald Sie Ihre Adresse bestätigt
+            haben.
+          </FieldDescription>
           <Button type="submit" :disabled="pending">Konto anlegen</Button>
           <p class="text-center text-sm text-muted-foreground">
             Schon registriert?

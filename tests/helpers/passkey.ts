@@ -1,4 +1,10 @@
-import { createHash, generateKeyPairSync, randomBytes, sign } from 'node:crypto'
+import {
+  createHash,
+  generateKeyPairSync,
+  randomBytes,
+  randomUUID,
+  sign,
+} from 'node:crypto'
 
 import { isoCBOR } from '@simplewebauthn/server/helpers'
 import type {
@@ -6,6 +12,10 @@ import type {
   RegistrationResponseJSON,
 } from '@simplewebauthn/browser'
 import { BETTER_AUTH_URL } from 'astro:env/server'
+
+import { passkey } from '@/db/schema'
+
+import { testDb } from './spam-db'
 
 const origin = new URL(BETTER_AUTH_URL)
 const base64 = (value: Uint8Array) => Buffer.from(value).toString('base64url')
@@ -114,4 +124,20 @@ export function cookiesOf(headers: Headers) {
     .getSetCookie()
     .map((cookie) => cookie.split(';')[0])
     .join('; ')
+}
+
+// A row as the plugin stores it; the key itself is never looked at
+export async function addPasskeyRow(userId: string) {
+  const id = randomUUID()
+  await testDb.insert(passkey).values({
+    id,
+    userId,
+    publicKey: 'cHVibGljLWtleQ',
+    credentialID: `credential-${id}`,
+    counter: 0,
+    deviceType: 'multiDevice',
+    backedUp: true,
+    createdAt: new Date(),
+  })
+  return id
 }

@@ -12,6 +12,8 @@ import { desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import * as schema from '@/db/schema'
 import type { Executor } from '@/db/types'
+import { errorMessage } from '@/lib/error-message'
+import { lockUser, resetIdentifier } from '@/lib/password-setup'
 
 // The reset callback and registration budget must use the same transaction
 // as Better Auth's adapter, rather than the app's pool.
@@ -46,11 +48,7 @@ function transactional<E extends Endpoint>(
           // Registration, passkey sign-in and reset always lock user first.
           // Reset holds this through password update, passkey deletion and
           // session revocation; a registration cannot commit behind its cleanup.
-          await on
-            .select({ id: schema.user.id })
-            .from(schema.user)
-            .where(eq(schema.user.id, userId))
-            .for('update')
+          await lockUser(on, { id: userId })
           ctx.context.adapter = drizzleAdapter(on, {
             provider: 'pg',
             schema,
@@ -77,16 +75,26 @@ function transactional<E extends Endpoint>(
   return Object.assign(wrapped, endpoint)
 }
 
+// A failed lookup would carry the token in the query's parameters, and an
+// uncaught error is logged whole — by Better Auth and then by its router
+// (better-call), which does so even after `onAPIError.onError`, so that
+// option can't scrub it. It goes on with the reason only.
 async function resetUser(ctx: AuthEndpointContext) {
   const token: unknown = ctx.body?.token || ctx.query?.token
   if (typeof token !== 'string' || !token) return undefined
-  const [row] = await db
-    .select({ userId: schema.verification.value })
-    .from(schema.verification)
-    .where(eq(schema.verification.identifier, `reset-password:${token}`))
-    .orderBy(desc(schema.verification.createdAt))
-    .limit(1)
-  return row?.userId
+  try {
+    const [row] = await db
+      .select({ userId: schema.verification.value })
+      .from(schema.verification)
+      .where(eq(schema.verification.identifier, resetIdentifier(token)))
+      .orderBy(desc(schema.verification.createdAt))
+      .limit(1)
+    return row?.userId
+  } catch (error) {
+    throw new Error(
+      `[auth] Konto des Links zum Zurücksetzen nicht ermittelt: ${errorMessage(error)}`,
+    )
+  }
 }
 
 async function authenticatingUser(ctx: AuthEndpointContext) {

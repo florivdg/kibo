@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import CardHeading from '@/components/admin/CardHeading.vue'
 import BackToLoginLink from '@/components/auth/BackToLoginLink.vue'
 import EmailField from '@/components/auth/EmailField.vue'
+import ForgotPasswordHint from '@/components/auth/ForgotPasswordHint.vue'
 import FormError from '@/components/auth/FormError.vue'
 import FormNotice from '@/components/auth/FormNotice.vue'
 import { Button } from '@/components/ui/button'
@@ -46,8 +47,10 @@ async function submit() {
 </script>
 
 <template>
-  <!-- Confirming only unlocks the login; it deliberately grants no session, so
-       that a link from the mailbox can't skip the password and 2FA -->
+  <!-- Confirming grants no session, so that a link from the mailbox can't skip
+       the password and 2FA. An account without a password is taken to set
+       one instead of here (startPasswordSetup in auth.ts); this is for the
+       link opened again once it has one, or when that step failed. -->
   <Card v-if="verified && !linkErrorMessage">
     <CardHeader>
       <CardHeading :level="1">E-Mail-Adresse bestätigt</CardHeading>
@@ -56,6 +59,7 @@ async function submit() {
     <CardContent>
       <FieldGroup>
         <Button as="a" href="/admin/login">Zur Anmeldung</Button>
+        <ForgotPasswordHint lead="Noch kein Passwort festgelegt?" />
       </FieldGroup>
     </CardContent>
   </Card>
@@ -66,7 +70,7 @@ async function submit() {
         {{
           linkErrorMessage
             ? 'Wir schicken Ihnen gerne einen neuen Bestätigungslink.'
-            : 'Wir haben Ihnen einen Bestätigungslink geschickt. Öffnen Sie ihn, um sich anmelden zu können.'
+            : 'Wir haben Ihnen einen Bestätigungslink geschickt. Öffnen Sie ihn, um Ihr Passwort festzulegen.'
         }}
       </CardDescription>
     </CardHeader>
@@ -84,6 +88,13 @@ async function submit() {
           <Button type="submit" variant="outline" :disabled="pending">
             Bestätigungslink erneut senden
           </Button>
+          <!-- Says nothing about the account: a link Better Auth turned
+               away, or one opened before the sign-up was stored completely
+               (dropPasswordAndSessions in src/lib/password-setup.ts) -->
+          <ForgotPasswordHint
+            v-if="linkErrorMessage"
+            lead="Adresse schon bestätigt, aber noch kein Passwort festgelegt?"
+          />
           <BackToLoginLink />
         </FieldGroup>
       </form>

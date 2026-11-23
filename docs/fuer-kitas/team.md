@@ -41,8 +41,8 @@ bis zu neun Admins.
 Wer schon ein Kibo-Konto mit dieser Adresse hat, meldet sich an und nimmt die
 Einladung an. Wer noch keines hat, legt über den Link eines an – das geht auch
 dann, wenn die Registrierung auf der Instanz sonst geschlossen ist –, bestätigt
-die E-Mail-Adresse, meldet sich an und nimmt die Einladung an. Annehmen kann
-nur das Konto mit genau der eingeladenen Adresse.
+die E-Mail-Adresse, legt dabei das Passwort fest, meldet sich an und nimmt die
+Einladung an. Annehmen kann nur das Konto mit genau der eingeladenen Adresse.
 
 Gut zu wissen:
 

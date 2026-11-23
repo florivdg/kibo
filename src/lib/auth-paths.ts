@@ -12,6 +12,15 @@ export const VERIFY_EMAIL_CALLBACK = `${VERIFY_EMAIL_PATH}?verified=1`
 // Better Auth checks the reset token first and appends it as ?token=
 export const RESET_PASSWORD_PATH = '/admin/reset-password'
 
+// The same page with a token of Kibo's own, where a confirmation link leads
+// an account without a password (startPasswordSetup in auth.ts)
+export function passwordSetupPath(token: string) {
+  return `${RESET_PASSWORD_PATH}?token=${encodeURIComponent(token)}`
+}
+
+// Where a new reset link is asked for
+export const FORGOT_PASSWORD_PATH = '/admin/forgot-password'
+
 // Where the link of an invitation to a Kita leads. Rendered with and without
 // a session: the link itself signs nobody in.
 export const INVITATION_PATH = '/admin/invitation'

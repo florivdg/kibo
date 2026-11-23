@@ -18,10 +18,11 @@ import {
   type PasskeyLookupContext,
 } from '@/lib/passkeys/rules'
 import { passkeyTransaction } from '@/lib/passkeys/transactions'
+import { resetIdentifier } from '@/lib/password-setup'
 
 import { apiRefusal } from './helpers/api-error'
 import { answer, authRequests, PASSWORD, type Account } from './helpers/auth'
-import { cookiesOf, softwarePasskey } from './helpers/passkey'
+import { addPasskeyRow, cookiesOf, softwarePasskey } from './helpers/passkey'
 import { testDb } from './helpers/spam-db'
 
 // Passkeys (src/lib/passkeys/, checkPasskeyRegistration and onPasswordReset
@@ -35,22 +36,6 @@ const { get, newAccount, post, removeAccounts, resetRateLimit } = authRequests(
   'passkey',
 )
 
-// A row as the plugin stores it; the key itself is never looked at here
-async function addPasskeyRow(userId: string) {
-  const id = randomUUID()
-  await testDb.insert(passkey).values({
-    id,
-    userId,
-    publicKey: 'cHVibGljLWtleQ',
-    credentialID: `credential-${id}`,
-    counter: 0,
-    deviceType: 'multiDevice',
-    backedUp: true,
-    createdAt: new Date(),
-  })
-  return id
-}
-
 function passkeysOf(userId: string) {
   return testDb.select().from(passkey).where(eq(passkey.userId, userId))
 }
@@ -59,7 +44,7 @@ async function resetTokenFor(owner: Account) {
   const token = randomUUID()
   await testDb.insert(verification).values({
     id: randomUUID(),
-    identifier: `reset-password:${token}`,
+    identifier: resetIdentifier(token),
     value: owner.id,
     expiresAt: new Date(Date.now() + 60 * 60 * 1000),
   })
@@ -572,7 +557,7 @@ describe('a password reset', () => {
         await testDb
           .select()
           .from(verification)
-          .where(eq(verification.identifier, `reset-password:${token}`)),
+          .where(eq(verification.identifier, resetIdentifier(token))),
       ).toHaveLength(1)
     } finally {
       options.onPasswordReset = original

@@ -18,7 +18,12 @@ nicht – kommt keine E-Mail an, prüfen Sie die Schreibweise und den
 Spam-Ordner.
 
 Mit dem neuen Passwort werden alle [Passkeys](#passkeys) des Kontos entfernt.
-Richten Sie sie danach neu ein.
+Richten Sie sie danach neu ein. Ältere Links zum Zurücksetzen gelten dann nicht
+mehr.
+
+Der Link kam an Ihre Adresse; ein Konto, dessen Adresse noch nicht bestätigt
+war, gilt danach als bestätigt. Das hilft auch, wenn der Link zum Festlegen des
+Passworts nach der Registrierung abgelaufen ist.
 
 ## E-Mail-Adresse ändern
 

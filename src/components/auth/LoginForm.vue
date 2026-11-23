@@ -16,9 +16,10 @@ import { FieldGroup, FieldSeparator } from '@/components/ui/field'
 import { useFormSubmit } from '@/composables/use-form-submit'
 import { usePasskeySignIn } from '@/composables/use-passkey-sign-in'
 import { authClient } from '@/lib/auth-client'
-import { VERIFY_EMAIL_PATH } from '@/lib/auth-paths'
+import { FORGOT_PASSWORD_PATH, VERIFY_EMAIL_PATH } from '@/lib/auth-paths'
 
-// `passwordReset`: the reset page sent the admin here with a new password.
+// `passwordReset`: the reset page sent the admin here with a new password,
+// or with the account's first one.
 // `signupOpen`: whether this instance takes sign-ups (SIGNUP_MODE); the page
 // reads it on the server.
 const props = defineProps<{
@@ -38,8 +39,11 @@ const { supported: passkeySupported, signInWithButton } = usePasskeySignIn(
   form,
 )
 
-// Unconfirmed admins can't sign in, so offer them a fresh link with their
-// address already filled in
+// Unconfirmed accounts can't sign in, so offer a fresh link with the address
+// already filled in. A password sign-in says EMAIL_NOT_VERIFIED only once
+// the password matched (the sign-up form's own is random, SignupForm.vue); a
+// passkey sign-in says it for any account whose address isn't confirmed
+// (src/lib/passkeys/rules.ts).
 const verifyEmailUrl = computed(() =>
   errorCode.value === 'EMAIL_NOT_VERIFIED'
     ? `${VERIFY_EMAIL_PATH}?email=${encodeURIComponent(email.value)}`
@@ -79,7 +83,7 @@ async function submit() {
           <FormNotice
             :message="
               passwordReset && !error
-                ? 'Ihr Passwort wurde geändert. Bitte melden Sie sich mit dem neuen Passwort an.'
+                ? 'Ihr Passwort ist gespeichert. Melden Sie sich jetzt damit an.'
                 : null
             "
           />
@@ -113,7 +117,7 @@ async function submit() {
           </template>
           <p class="text-center text-sm text-muted-foreground">
             <a
-              href="/admin/forgot-password"
+              :href="FORGOT_PASSWORD_PATH"
               class="underline underline-offset-4"
             >
               Passwort vergessen?

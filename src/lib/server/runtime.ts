@@ -30,7 +30,7 @@ import { purgeUnverifiedAccounts } from '@/lib/unverified-accounts'
 // The one scheduler. Expired notes are hidden from every read immediately and
 // deleted for good on this beat; expired sessions, expired verification rows
 // (links nobody followed, passkey challenges nobody used), Better Auth's
-// rate-limit counters past their window, sign-ups never confirmed,
+// rate-limit counters past their window, sign-ups never finished,
 // invitations that are answered or over, push subscriptions that stopped
 // working or that nothing has come of for half a year, reported notes past
 // their retention
