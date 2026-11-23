@@ -1,10 +1,19 @@
 ---
 import CreateBoardForm from '@/components/admin/boards/CreateBoardForm.vue'
 import AdminLayout from '@/layouts/Admin.astro'
+import { countBoards } from '@/lib/board/queries'
+import { BOARD_LIMIT } from '@/lib/limits'
 
-// A Kita the hosted instance has paused takes no new boards; the list says
-// why (the notice in the layout)
-if (Astro.locals.kitaPaused) return Astro.redirect('/admin/boards')
+// A Kita the hosted instance has paused takes no new boards, nor one that
+// has BOARD_LIMIT; the list says why (the notice in the layout, the sentence
+// in place of the button)
+const organizationId = Astro.locals.organizationId!
+if (
+  Astro.locals.kitaPaused ||
+  (await countBoards(organizationId)) >= BOARD_LIMIT
+) {
+  return Astro.redirect('/admin/boards')
+}
 ---
 
 <AdminLayout

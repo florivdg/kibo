@@ -1,7 +1,7 @@
 # Bretter anlegen und teilen
 
-Eine Kita kann beliebig viele Bretter haben, zum Beispiel eine Fundkiste für
-das ganze Haus und eine Pinnwand je Gruppe. Geteilt werden sie über einen
+Eine Kita kann bis zu 30 Bretter haben, zum Beispiel eine Fundkiste für das
+ganze Haus und eine Pinnwand je Gruppe. Geteilt werden sie über einen
 gemeinsamen Link, den Kita-Link: Er führt auf eine Seite mit allen Brettern
 der Kita.
 
@@ -32,6 +32,11 @@ Die Art lässt sich nach dem Anlegen nicht mehr ändern.
 Das neue Brett steht sofort auf der Seite der Kita; einen neuen Link braucht
 es dafür nicht. Name und Beschreibung können Sie auf der Seite des Bretts
 jederzeit ändern.
+
+Unter „Bretter“ steht, wie viele Bretter die Kita schon hat. Neue lassen sich
+anlegen, solange es weniger als 30 sind; sonst steht dort und im Dashboard
+statt „Brett anlegen“ ein Hinweis. Löschen Sie dann zuerst Bretter, die nicht
+mehr gebraucht werden.
 
 ## Den Kita-Link teilen
 

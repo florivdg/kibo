@@ -17,17 +17,27 @@ import {
   FieldTitle,
 } from '@/components/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { useFormSubmit } from '@/composables/use-form-submit'
+import { useFormSubmit, type SubmitError } from '@/composables/use-form-submit'
+import { authErrorMessage } from '@/lib/auth-errors'
 import {
   BOARD_TYPE_IDS,
   BOARD_TYPES,
   type BoardType,
 } from '@/lib/board/board-types'
 
+// The Kita has reached BOARD_LIMIT, e.g. in another tab since this page
+// loaded: the refusal comes as a ready sentence
+function createErrorMessage(failure: SubmitError) {
+  return (
+    (failure.code === 'CONFLICT' && failure.message) ||
+    authErrorMessage(failure)
+  )
+}
+
 const type = ref<BoardType>('fundkiste')
 const name = ref(BOARD_TYPES.fundkiste.label)
 const description = ref('')
-const { error, pending, run } = useFormSubmit()
+const { error, pending, run } = useFormSubmit(createErrorMessage)
 const typeHintId = useId()
 
 // Suggest the type's name until the admin picks their own

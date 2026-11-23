@@ -1,0 +1,28 @@
+---
+import { Plus } from '@lucide/vue'
+
+import { buttonVariants, type ButtonVariants } from '@/components/ui/button'
+import { BOARD_LIMIT, BOARD_LIMIT_MESSAGE } from '@/lib/limits'
+
+// „Brett anlegen“ where the Kita can take a new board: nothing while the
+// hosted instance has paused it (the layout's notice says why), the reason
+// instead of the link once it has BOARD_LIMIT boards. asChild can't reach
+// into Astro slot content, so the link is styled as a button.
+interface Props {
+  boardCount: number
+  variant?: ButtonVariants['variant']
+}
+
+const { boardCount, variant } = Astro.props
+const paused = Astro.locals.kitaPaused
+const full = boardCount >= BOARD_LIMIT
+---
+
+{!paused &&
+  (full ? (
+    <p class="max-w-xs text-sm text-muted-foreground">{BOARD_LIMIT_MESSAGE}</p>
+  ) : (
+    <a href="/admin/boards/new" class={buttonVariants({ variant })}>
+      <Plus /> Brett anlegen
+    </a>
+  ))}

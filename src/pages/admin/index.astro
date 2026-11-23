@@ -1,7 +1,5 @@
 ---
-import { Plus } from '@lucide/vue'
-
-import { buttonVariants } from '@/components/ui/button'
+import NewBoardLink from '@/components/admin/boards/NewBoardLink.astro'
 import {
   Card,
   CardDescription,
@@ -14,8 +12,6 @@ import { listBoards } from '@/lib/board/queries'
 // The middleware guarantees an active Kita on admin pages
 const organizationId = Astro.locals.organizationId!
 const boards = await listBoards(organizationId, new Date())
-// A Kita the hosted instance has paused takes no new boards
-const paused = Astro.locals.kitaPaused
 
 const busiest = boards.toSorted((a, b) => b.noteCount - a.noteCount)[0]
 const stats = [
@@ -40,16 +36,10 @@ const stats = [
           Überblick über die Bretter Ihrer Kita.
         </p>
       </div>
-      {!paused && (
-        <a
-          href="/admin/boards/new"
-          class={buttonVariants({
-            variant: boards.length ? 'outline' : 'default',
-          })}
-        >
-          <Plus /> Brett anlegen
-        </a>
-      )}
+      <NewBoardLink
+        boardCount={boards.length}
+        variant={boards.length ? 'outline' : 'default'}
+      />
     </div>
     <div class="grid gap-4 sm:grid-cols-3">
       {stats.map((stat) => (
