@@ -9,6 +9,75 @@ Git-Tag `vX.Y.Z` und als Images `ghcr.io/florivdg/kibo:X.Y.Z` und
 Bis 1.2.1 entstand Kibo in einem privaten Repository; die Einträge bis dahin
 verweisen deshalb auf keine Commits.
 
+## 1.2.5 – 2026-11-24
+
+[Änderungen seit 1.2.4](https://github.com/florivdg/kibo/compare/v1.2.4...v1.2.5)
+
+### Sicherheit
+
+- **Registrierung mit fremder Adresse:** Wer sich mit der E-Mail-Adresse
+  einer anderen Person registrierte, konnte dabei ein eigenes Passwort
+  festlegen. Bestätigte die Person mit dem Postfach später den Link, galt
+  dieses Passwort – und damit auch der Zugang zu Einladungen an diese
+  Adresse. Jetzt fragt die Registrierung nur Name und E-Mail-Adresse ab; der
+  Bestätigungslink führt direkt zu „Passwort festlegen“, ohne weitere E-Mail.
+  Die Bestätigung löscht ein vorher gesetztes Passwort und alle Sitzungen.
+  „Passwort vergessen“ bestätigt die Adresse ebenfalls und macht die übrigen
+  offenen Links zum Festlegen oder Zurücksetzen ungültig.
+  ([#9](https://github.com/florivdg/kibo/issues/9))
+- **Weiterleitungen auf fremde Seiten:** Präparierte Rücksprungadressen –
+  `redirectTo` bei Anmeldung und Zwei-Faktor-Code, `callbackURL` beim
+  Bestätigungslink, auch in Better Auths eigener Fehler-Weiterleitung –
+  konnten nach dem Normalisieren auf eine andere Domain zeigen (etwa
+  `/admin/..//evil.example`). Geprüft wird jetzt die normalisierte Adresse.
+- **Höchstens 30 Bretter je Kita:** Bisher gab es keine Grenze, und die
+  öffentliche Kita-Seite zeigt jedes Brett.
+  ([#10](https://github.com/florivdg/kibo/issues/10))
+- **astro 7.4.13 und @astrojs/node 11.1.14:**
+  [GHSA-r3h5-4585-7x3w](https://github.com/advisories/GHSA-r3h5-4585-7x3w),
+  der Bild-Endpunkt konnte auf Dateisystemen mit Groß- und Kleinschreibung
+  Dateien aus einem Nachbarordner der Ausgabe lesen. Kibo beantwortet
+  `/_image` ohnehin mit 404, der betroffene Code steckte aber im Image.
+
+### Geändert
+
+- **Bretter:** Eine Kita mit 30 Brettern legt keine weiteren an; die
+  Verwaltung zeigt „Bretter: N von 30.“ und statt „Brett anlegen“ den Grund.
+  Kitas, die schon mehr haben, behalten und zeigen alle.
+- **Aufräumen:** Bestätigte Konten ohne Kita, die sieben Tage nach der
+  letzten Änderung weder Passwort noch Passkey haben, werden beim stündlichen
+  Aufräumen gelöscht – wie bisher unbestätigte Konten sieben Tage nach der
+  Registrierung.
+- **Datenschutz-Vorlage** (`deploy/legal/datenschutz.md`): beschreibt die
+  Registrierung ohne Passwort, den Link zum Festlegen, die neue Löschregel
+  und dass ein unerwarteter Fehler den Code eines Links zum Festlegen oder
+  Zurücksetzen ins Fehlerprotokoll bringen kann.
+- Abhängigkeiten aktualisiert, u. a. better-auth 1.7.28 (mit
+  `@better-auth/core` und `@better-auth/passkey`), satteri 0.11 (verlangt
+  von `@astrojs/markdown-satteri` 0.4.10), nodemailer 10.6.1, Vue 3.5.46 und
+  Tailwind CSS 4.3.5.
+
+### Behoben
+
+- **Handschrift:** Seit 1.2.3 fehlte die Schrift Playwrite DE Grund – die
+  Überschriften der Startseite, der Bretter, der Rechtstexte und der
+  Dokumentation erschienen in einer Ersatzschrift. Der Build hatte sie nach
+  dem Astro-Update stillschweigend weggelassen.
+  ([#8](https://github.com/florivdg/kibo/issues/8))
+
+### Hinweise zum Update
+
+- Keine Migration und keine neuen Variablen.
+- Wer seine Datenschutzerklärung aus der Vorlage erstellt hat, passt
+  „Konten der Kita“, „E-Mails“, „Server-Protokolle“ und die Tabelle
+  „Speicherdauer im Überblick“ an.
+- Wer sich vor dem Update registriert und die Adresse noch nicht bestätigt
+  hat, legt das Passwort beim Bestätigen neu fest; das bei der Registrierung
+  gewählte gilt nicht mehr.
+- Kitas mit mehr als 30 Brettern findet
+  `select organization_id, count(*) from board group by 1 having count(*) > 30;`
+  in der Datenbank.
+
 ## 1.2.4 – 2026-11-05
 
 [Änderungen seit 1.2.3](https://github.com/florivdg/kibo/compare/v1.2.3...v1.2.4)
