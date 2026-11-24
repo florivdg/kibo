@@ -293,6 +293,11 @@ export async function findOrganizationName(organizationId: string) {
   return row?.name
 }
 
+// How many boards the Kita has, against BOARD_LIMIT
+export function countBoards(organizationId: string, on: Executor = db) {
+  return on.$count(board, eq(board.organizationId, organizationId))
+}
+
 export function organizationBoard(organizationId: string, boardId: string) {
   return and(eq(board.id, boardId), eq(board.organizationId, organizationId))
 }

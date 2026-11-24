@@ -10,12 +10,14 @@ import { db } from '@/db'
 import { board, note } from '@/db/schema'
 import { BOARD_TYPE_IDS } from '@/lib/board/board-types'
 import {
+  createBoard,
   deleteBoard,
   renewKitaLink,
   setBoardPushEnabled,
 } from '@/lib/board/mutations'
 import { notePage, organizationBoard } from '@/lib/board/queries'
 import { BOARD_DESCRIPTION_MAX, BOARD_NAME_MAX } from '@/lib/board/types'
+import { BOARD_LIMIT_MESSAGE } from '@/lib/limits'
 
 // The middleware verifies the session and Kita membership for boards.*.
 // Every member of a Kita administers it.
@@ -42,15 +44,20 @@ const details = {
 
 // Admin: manage the boards of the active Kita
 export const boards = {
+  // At most BOARD_LIMIT boards per Kita; the refusal is a ready sentence
   create: defineAction({
     input: z.object({ type: z.enum(BOARD_TYPE_IDS), ...details }),
     handler: async (input, context) => {
       const organizationId = await writableOrganizationId(context)
-      const [created] = await db
-        .insert(board)
-        .values({ ...input, organizationId })
-        .returning({ id: board.id })
-      return created!
+      const created = await createBoard(organizationId, input)
+      if (!created) throw new ActionError({ code: 'NOT_FOUND' })
+      if (created === 'full') {
+        throw new ActionError({
+          code: 'CONFLICT',
+          message: BOARD_LIMIT_MESSAGE,
+        })
+      }
+      return created
     },
   }),
 

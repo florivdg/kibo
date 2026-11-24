@@ -1,17 +1,48 @@
 import { eq } from 'drizzle-orm'
 
 import { db } from '@/db'
-import { board, kitaLink } from '@/db/schema'
+import { board, kitaLink, organization } from '@/db/schema'
+import { BOARD_LIMIT } from '@/lib/limits'
 import { pushDispatcher } from '@/lib/push/dispatcher'
 import { deleteBoardSubscriptions } from '@/lib/push/subscriptions'
 
-import { organizationBoard } from './queries'
+import { countBoards, organizationBoard } from './queries'
 import { newLinkToken } from './secrets'
 
 // Admin changes that reach beyond the board row, as plain functions so the
 // tests can run them; src/actions/boards.ts checks the session and calls them.
 // The board functions return the rows they changed: none when the board isn't
 // one of the Kita's.
+
+// A new board's id, or 'full' when the Kita already has BOARD_LIMIT boards;
+// undefined when the Kita is gone. The Kita's organization row is locked
+// first, FOR NO KEY UPDATE: parallel creates for the same Kita count one
+// after the other and can't slip past the limit together, while everything
+// that only references the row (the board's own insert, members, invitations,
+// the Kita link: FOR KEY SHARE) isn't held up. Renaming or deleting the Kita
+// takes the same row before it touches any board, so no two of them can wait
+// for each other the other way round.
+export function createBoard(
+  organizationId: string,
+  values: Omit<typeof board.$inferInsert, 'organizationId'>,
+) {
+  return db.transaction(async (tx) => {
+    const [kita] = await tx
+      .select({ id: organization.id })
+      .from(organization)
+      .where(eq(organization.id, organizationId))
+      .for('no key update')
+    if (!kita) return undefined
+    if ((await countBoards(organizationId, tx)) >= BOARD_LIMIT) {
+      return 'full' as const
+    }
+    const [created] = await tx
+      .insert(board)
+      .values({ ...values, organizationId })
+      .returning({ id: board.id })
+    return created!
+  })
+}
 
 // Changes the board and, where that revokes its notifications, drops the
 // subscriptions in the same transaction. Once that is committed, a

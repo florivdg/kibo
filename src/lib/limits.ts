@@ -50,6 +50,12 @@ export const MEMBERSHIP_LIMIT = 10
 // Invitations of one Kita that are still waiting for an answer
 export const INVITATION_LIMIT = 10
 
+// Boards of one Kita: a few per group and purpose, not hundreds. The Kita
+// page reads and renders all of them on every visit. boards.create enforces
+// it; a Kita that is above it keeps its boards and only can't add one.
+export const BOARD_LIMIT = 30
+export const BOARD_LIMIT_MESSAGE = `Neue Bretter lassen sich nur anlegen, solange die Kita weniger als ${BOARD_LIMIT} hat. Löschen Sie zuerst Bretter, die nicht mehr gebraucht werden.`
+
 // How long the link of an invitation works. Longer than the hour of the other
 // links: it goes to someone who didn't ask for it just now. The mail and the
 // settings page say this number.
