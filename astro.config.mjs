@@ -88,8 +88,11 @@ export default defineConfig({
       cssVariable: '--font-playwrite',
       weights: [400],
       styles: ['normal'],
-      // Google serves this handwriting font without a "latin" subset
-      subsets: ['fallback'],
+      // Google serves this handwriting font without a "latin" subset: its
+      // stylesheet calls the usable file `fallback`, while the family's
+      // metadata lists only `menu`, which unifont checks before it fetches
+      // the stylesheet. Asking for `fallback` alone makes it skip the font.
+      subsets: ['menu', 'fallback'],
     },
     {
       provider: fontProviders.google(),
