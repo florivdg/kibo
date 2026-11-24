@@ -556,9 +556,13 @@ deshalb gezählt: die Kita, das einladende Konto und die eingeladene Adresse.
 | `mail:invitation:recipient-client-hour` | Adresse + Netz | 1 Stunde   | 3      |
 | `mail:invitation:recipient-client-day`  | Adresse + Netz | 24 Stunden | 5      |
 
-Dazu kommen feste Obergrenzen: höchstens **10 offene Einladungen** und
-**10 Mitglieder** pro Kita (`INVITATION_LIMIT`, `MEMBERSHIP_LIMIT` in
-`src/lib/limits.ts`) und höchstens drei eigene Kitas pro Konto.
+Dazu kommen feste Obergrenzen: höchstens **10 offene Einladungen**,
+**10 Mitglieder** und **30 Bretter** pro Kita (`INVITATION_LIMIT`,
+`MEMBERSHIP_LIMIT`, `BOARD_LIMIT` in `src/lib/limits.ts`) und höchstens drei
+eigene Kitas pro Konto. Die Grenze für Bretter prüft `boards.create` unter
+einer Sperre auf der Zeile der Kita, sodass auch parallele Aufrufe sie nicht
+überschreiten; sie hält die Kita-Seite klein, die bei jedem Aufruf alle Bretter
+liest.
 
 - **Alle drei Bezüge** prüft ein Hook vor `/organization/invite-member`
   (`checkInvitationRequest` in `src/lib/auth.ts`), bevor Better Auth die
