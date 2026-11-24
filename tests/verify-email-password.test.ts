@@ -197,6 +197,14 @@ describe('a sign-up by someone who doesn’t hold the mailbox', () => {
     expect(second.status).toBe(200)
     const { id } = (await accountOf(email))!
     expect(await passwordHashOf(id)).toBeString()
+    // A session the account can't get through Kibo, there to see it go
+    await testDb.insert(session).values({
+      id: randomUUID(),
+      token: randomUUID(),
+      userId: id,
+      expiresAt: new Date(Date.now() + 3_600_000),
+    })
+    expect(await sessionsOf(id)).toHaveLength(1)
 
     // The holder opens the (resent) link: confirmed, and on to setting the
     // password — the password the stranger set is gone, as is every session
@@ -326,6 +334,14 @@ describe('a confirmation racing the sign-up or a reset', () => {
     expect((await signIn(email, OWNER_PASSWORD)).status).toBe(200)
   })
 
+  test('confirms nothing for an account that is gone', async () => {
+    // Purged between Better Auth's read and the hook: the link is turned
+    // away, so Better Auth never confirms by address
+    expect(await dropPasswordAndSessions(`gone-${randomUUID()}`)).toBe(
+      'no-credential',
+    )
+  })
+
   test('makes no setup link once the account has a password', async () => {
     const { email, token, id } = await confirmedWithoutPassword()
     expect((await setPassword(token, OWNER_PASSWORD)).status).toBe(200)
@@ -359,17 +375,21 @@ describe('signing up honestly', () => {
     expect(await answer(signIn(email, throwaway))).toEqual(WRONG)
   })
 
-  test('opening the link again gives a fresh form, until a password is set', async () => {
+  test('opening the link again keeps the open form, until a password is set', async () => {
     const { email, token: first, id } = await confirmedWithoutPassword()
     const link = await confirmationLink(email)
 
-    // Better Auth's "already confirmed": still no password, so a new form,
-    // and the earlier one is void
+    // Better Auth's "already confirmed": still no password, so a new form —
+    // and the one already open (a double click, a mail scanner) still works
     const second = await setupFormFor(email, link)
     expect(second).not.toBe(first)
-    expect(await resetRowsOf(id)).toHaveLength(1)
-    expect(await answer(setPassword(first, OWNER_PASSWORD))).toEqual(LINK_VOID)
-    expect((await setPassword(second, OWNER_PASSWORD)).status).toBe(200)
+    expect(await resetRowsOf(id)).toHaveLength(2)
+    expect((await setPassword(first, OWNER_PASSWORD)).status).toBe(200)
+    // Saving voids the other one
+    expect(await resetRowsOf(id)).toEqual([])
+    expect(await answer(setPassword(second, STRANGER_PASSWORD))).toEqual(
+      LINK_VOID,
+    )
 
     // With a password the link says "confirmed", as it always did
     expect(await open(link)).toBe(VERIFY_EMAIL_CALLBACK)

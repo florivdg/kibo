@@ -68,7 +68,8 @@ function credentialOf(userId: string | typeof user.id) {
 //
 // Better Auth read the account before calling this, and a reset may have
 // confirmed it since: under the lock, an account that is confirmed already
-// (or gone) is left as it is.
+// is left as it is. One that is gone (purged in between) answers
+// `no-credential` like below, so Better Auth confirms nothing by address.
 //
 // The race with the sign-up itself: Better Auth's sign-up writes the user
 // and its credential row in separate statements, so a link opened in between
@@ -81,7 +82,8 @@ export async function dropPasswordAndSessions(
 ): Promise<'confirmable' | 'no-credential'> {
   return db.transaction(async (on) => {
     const locked = await lockUser(on, { id: userId })
-    if (!locked || locked.emailVerified) return 'confirmable'
+    if (!locked) return 'no-credential'
+    if (locked.emailVerified) return 'confirmable'
     const cleared = await on
       .update(account)
       .set({ password: null })
@@ -111,8 +113,10 @@ export async function forgetResetTokens(userId: string, on: Executor) {
 
 // For a verified sign-up confirmation (its address and, in links Better Auth
 // made, the account's id): a reset token as Better Auth's "Passwort
-// vergessen" makes one, replacing the account's earlier ones, so only the
-// newest form to set the password works. Undefined (and nothing written)
+// vergessen" makes one. The account's earlier ones stay: opening the link
+// again (a double click, a second device, a mail scanner that follows it)
+// must not void a form someone is filling in. Saving a password voids them
+// all (`finishPasswordReset`), and unused ones expire. Undefined (and nothing written)
 // unless the address names that account, it is confirmed and it still has no
 // password — all read under the lock.
 export async function passwordSetupToken({
@@ -132,7 +136,6 @@ export async function passwordSetupToken({
       .where(credentialOf(locked.id))
     if (credential?.password) return undefined
     const token = generateId(24)
-    await forgetResetTokens(locked.id, on)
     await on.insert(verification).values({
       id: generateId(),
       identifier: resetIdentifier(token),
