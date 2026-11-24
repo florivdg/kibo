@@ -235,7 +235,7 @@ Kibo verschickt E-Mails nur aus einem konkreten Anlass – keine Newsletter, kei
 **E-Mails an Konten.** An die E-Mail-Adresse eines Kontos schickt Kibo:
 
 - nach der Registrierung einen Link zur Bestätigung der Adresse; er führt danach direkt zum Festlegen des Passworts, eine weitere E-Mail gibt es dafür nicht,
-- auf Anforderung einen Link zum Zurücksetzen des Passworts,
+- auf Anforderung einen Link zum Zurücksetzen des Passworts; wer darüber ein neues Passwort speichert, bestätigt damit auch eine noch unbestätigte Adresse, und alle anderen offenen Links zum Festlegen oder Zurücksetzen des Passworts werden ungültig,
 - bei einer Änderung der E-Mail-Adresse zwei Nachrichten: zuerst an die bisherige Adresse, mit der neuen Adresse und einem Link, der Änderung zuzustimmen; erst nach dieser Zustimmung an die neue Adresse, mit einem Link, sie zu bestätigen. Bis dahin bleibt die bisherige Adresse die des Kontos.
 
 Die Links zum Bestätigen und Zurücksetzen sind eine Stunde gültig. Verantwortlich ist der Betreiber; Rechtsgrundlage ist der Vertrag über die Nutzung von Kibo beziehungsweise vorvertragliche Maßnahmen (Art. 6 Abs. 1 lit. b DSGVO).
@@ -255,7 +255,7 @@ Die Einladungs-E-Mail fasst diese Angaben in einem kurzen Hinweis zusammen und v
 
 ## Server-Protokolle
 
-Die Anwendung, die Datenbank und der vorgeschaltete Reverse Proxy protokollieren Betriebs- und Fehlermeldungen, damit der Betreiber Störungen erkennen und beheben kann. Kibos eigene Meldungen enthalten keine IP-Adressen, keine Links der Kitas, keine Zetteltexte und keine Bestätigungs- oder Reset-Links; E-Mail-Adressen erscheinen nur gekürzt (etwa `a***@example.org`). Bei einem unerwarteten Fehler, etwa einer gescheiterten Datenbankabfrage, kann das Fehlerprotokoll aber Teile der betroffenen Anfrage enthalten, zum Beispiel den Link einer Kita, einen Zetteltext, eine IP-Adresse oder den Code eines Links zum Zurücksetzen des Passworts. Einige Meldungen nennen die Konto-ID – eine zufällige Kennung, nie Name oder Adresse –, etwa wenn eine E-Mail zu Meldungen nicht zugestellt werden konnte. Zuordnen lässt sich eine solche Kennung nur mit der Datenbank.
+Die Anwendung, die Datenbank und der vorgeschaltete Reverse Proxy protokollieren Betriebs- und Fehlermeldungen, damit der Betreiber Störungen erkennen und beheben kann. Kibos eigene Meldungen enthalten keine IP-Adressen, keine Links der Kitas, keine Zetteltexte und keine Bestätigungs- oder Reset-Links; E-Mail-Adressen erscheinen nur gekürzt (etwa `a***@example.org`). Bei einem unerwarteten Fehler, etwa einer gescheiterten Datenbankabfrage, kann das Fehlerprotokoll aber Teile der betroffenen Anfrage enthalten, zum Beispiel den Link einer Kita, einen Zetteltext, eine IP-Adresse oder den Code eines Links zum Festlegen oder Zurücksetzen des Passworts. Einige Meldungen nennen die Konto-ID – eine zufällige Kennung, nie Name oder Adresse –, etwa wenn eine E-Mail zu Meldungen nicht zugestellt werden konnte. Zuordnen lässt sich eine solche Kennung nur mit der Datenbank.
 
 Der Reverse Proxy schreibt in der mitgelieferten Konfiguration keine Zugriffsprotokolle. [Falls Zugriffsprotokolle mit IP-Adressen geführt werden, hier Inhalt, Zweck und Speicherdauer angeben.]
 
@@ -277,22 +277,22 @@ Rechtsgrundlage: berechtigtes Interesse an der Verfügbarkeit und Wiederherstell
 
 ## Speicherdauer im Überblick
 
-| Daten                                                             | Wie lange                                                                                                                                     |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Zettel                                                            | bis zum Ablauf (7, 14 oder 30 Tage), dann binnen einer Stunde gelöscht; früher, wenn er abgenommen wird                                       |
-| Meldungen samt Kopie des Zettels und Versandaufträgen             | 30 Tage nach dem Abschluss, spätestens 90 Tage nach der ersten Meldung                                                                        |
-| [Nur wenn `OPERATOR_EMAIL` gesetzt ist:] Hinweis an den Betreiber | nur in der E-Mail an den Betreiber: [Dauer wie oben]                                                                                          |
-| [Nur mit `VAPID_*`:] Benachrichtigungs-Abo                        | bis zum Ausschalten der Glocke, spätestens 180 Tage nach dem letzten Besuch und der letzten Zustellung                                        |
-| Zähler und Prüfwerte der Spam-Begrenzung                          | höchstens rund 26 Stunden, Prüfwerte von Texten 24 Stunden                                                                                    |
-| Zähler der Anmeldefunktion (IP-Adresse und Pfad)                  | spätestens rund zwei Stunden nach der letzten Anfrage                                                                                         |
-| Sitzung mit IP-Adresse und Browserkennung                         | bis zur Abmeldung, längstens sieben Tage nach der letzten Nutzung                                                                             |
-| Einträge für Anmeldung und Links                                  | fünf Minuten bis 30 Tage (siehe „Konten der Kita“), spätestens eine Stunde nach Ablauf gelöscht                                               |
-| Konto, Passkeys, Zwei-Faktor-Anmeldung                            | bis das Konto gelöscht wird; Konten ohne Kita, die nach sieben Tagen nicht bestätigt sind oder weder Passwort noch Passkey haben, automatisch |
-| Mitgliedschaft und Rolle in einer Kita                            | bis das Mitglied austritt oder entfernt wird oder die Kita oder das Konto gelöscht wird                                                       |
-| Einladung                                                         | bis sie beantwortet, zurückgezogen oder nach sieben Tagen abgelaufen ist, dann binnen einer Stunde gelöscht                                   |
-| Server-Protokolle                                                 | bis sie durch neuere überschrieben werden (höchstens 3 × 10 MB je Dienst)                                                                     |
-| Sicherungen                                                       | [14 Tage]                                                                                                                                     |
-| Auf Ihrem Gerät                                                   | siehe „Was auf Ihrem Gerät gespeichert wird“                                                                                                  |
+| Daten                                                             | Wie lange                                                                                                                                                        |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Zettel                                                            | bis zum Ablauf (7, 14 oder 30 Tage), dann binnen einer Stunde gelöscht; früher, wenn er abgenommen wird                                                          |
+| Meldungen samt Kopie des Zettels und Versandaufträgen             | 30 Tage nach dem Abschluss, spätestens 90 Tage nach der ersten Meldung                                                                                           |
+| [Nur wenn `OPERATOR_EMAIL` gesetzt ist:] Hinweis an den Betreiber | nur in der E-Mail an den Betreiber: [Dauer wie oben]                                                                                                             |
+| [Nur mit `VAPID_*`:] Benachrichtigungs-Abo                        | bis zum Ausschalten der Glocke, spätestens 180 Tage nach dem letzten Besuch und der letzten Zustellung                                                           |
+| Zähler und Prüfwerte der Spam-Begrenzung                          | höchstens rund 26 Stunden, Prüfwerte von Texten 24 Stunden                                                                                                       |
+| Zähler der Anmeldefunktion (IP-Adresse und Pfad)                  | spätestens rund zwei Stunden nach der letzten Anfrage                                                                                                            |
+| Sitzung mit IP-Adresse und Browserkennung                         | bis zur Abmeldung, längstens sieben Tage nach der letzten Nutzung                                                                                                |
+| Einträge für Anmeldung und Links                                  | fünf Minuten bis 30 Tage (siehe „Konten der Kita“), spätestens eine Stunde nach Ablauf gelöscht                                                                  |
+| Konto, Passkeys, Zwei-Faktor-Anmeldung                            | bis das Konto gelöscht wird; ohne Kita: unbestätigt sieben Tage nach der Registrierung, ohne Passwort und Passkey sieben Tage nach der letzten Änderung am Konto |
+| Mitgliedschaft und Rolle in einer Kita                            | bis das Mitglied austritt oder entfernt wird oder die Kita oder das Konto gelöscht wird                                                                          |
+| Einladung                                                         | bis sie beantwortet, zurückgezogen oder nach sieben Tagen abgelaufen ist, dann binnen einer Stunde gelöscht                                                      |
+| Server-Protokolle                                                 | bis sie durch neuere überschrieben werden (höchstens 3 × 10 MB je Dienst)                                                                                        |
+| Sicherungen                                                       | [14 Tage]                                                                                                                                                        |
+| Auf Ihrem Gerät                                                   | siehe „Was auf Ihrem Gerät gespeichert wird“                                                                                                                     |
 
 ## Pflicht zur Bereitstellung und automatisierte Entscheidungen
 
