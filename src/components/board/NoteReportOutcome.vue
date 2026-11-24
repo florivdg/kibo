@@ -21,8 +21,7 @@ defineProps<{
     direkt an
     <a :href="`mailto:${operatorEmail}`" :class="inlineLinkClass">{{
       operatorEmail
-    }}</a
-    >.
+    }}</a>.
   </p>
   <p v-else-if="operator" class="text-tinte/70 mt-1 text-sm">
     Der Betreiber prüft den Zettel.
