@@ -715,8 +715,9 @@ löscht beides (`src/lib/expired-sessions.ts`), dazu abgelaufene Einträge in
   ersten Besuch. Zähler bleiben etwas über ihr Fenster
   hinaus liegen (gut eine Stunde), weil die gleitenden Budgets in das
   abgelaufene Fenster zurückschauen. Derselbe Timer löscht Konten, deren
-  Adresse nach sieben Tagen noch nicht bestätigt ist und die zu keiner Kita
-  gehören (`src/lib/unverified-accounts.ts`), und Einladungen, die abgelaufen
+  Adresse nach sieben Tagen noch nicht bestätigt ist oder die sieben Tage nach
+  der Bestätigung noch kein Passwort und keinen Passkey haben, sofern sie zu
+  keiner Kita gehören (`src/lib/unverified-accounts.ts`), und Einladungen, die abgelaufen
   oder beantwortet sind – angenommen, abgelehnt, zurückgezogen
   (`src/lib/organization-members.ts`). Better Auth ließe sie für immer liegen,
   jede ist die E-Mail-Adresse einer Person.

@@ -34,7 +34,8 @@ docker compose top           # Prozesse
   (`IP|Pfad`), sobald ihre letzte Anfrage länger als das längste Fenster von
   einer Stunde plus 5 Minuten zurückliegt – also spätestens gut zwei Stunden
   danach –, Konten, deren E-Mail-Adresse nach sieben
-  Tagen nicht bestätigt ist und die zu keiner Kita gehören, Einladungen, die
+  Tagen nicht bestätigt ist oder die sieben Tage nach der Bestätigung weder
+  Passwort noch Passkey haben, sofern sie zu keiner Kita gehören, Einladungen, die
   abgelaufen oder beantwortet sind, sowie
   Benachrichtigungs-Abos, die wiederholt scheitern und seit 30 Tagen nichts
   mehr zugestellt bekommen haben oder die seit 180 Tagen weder einen Besuch

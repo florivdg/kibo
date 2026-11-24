@@ -11,6 +11,7 @@ import {
   MEMBERSHIP_LIMIT,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
+  RESET_PASSWORD_TOKEN_TTL_S,
 } from './limits'
 import { ac, OWNER_ROLE, roles } from './organization-roles'
 import {
@@ -181,6 +182,7 @@ export const authOptions = {
     enabled: true,
     minPasswordLength: PASSWORD_MIN_LENGTH,
     maxPasswordLength: PASSWORD_MAX_LENGTH,
+    resetPasswordTokenExpiresIn: RESET_PASSWORD_TOKEN_TTL_S,
   },
   rateLimit: {
     // On in development too, so the rules that protect production are the ones

@@ -9,14 +9,19 @@ Seite führt vom ersten Aufruf bis zur angelegten Kita.
 1. Auf der Startseite „Kita registrieren“ wählen. Auf einer gehosteten
    Instanz heißt der Knopf „30 Tage kostenlos testen“ (mit der Länge der
    [Testphase](./abo.md#testphase)).
-2. Ihren Namen, Ihre E-Mail-Adresse und ein Passwort mit mindestens 12 Zeichen
-   eingeben und „Konto anlegen“ wählen.
-3. Kibo schickt einen Bestätigungslink an die Adresse. Öffnen Sie ihn – erst
-   danach können Sie sich anmelden. Kommt keine E-Mail an, hilft „E-Mail erneut
-   senden“ auf der Seite, die nach der Registrierung erscheint; ein Blick in
-   den Spam-Ordner lohnt sich auch.
+2. Ihren Namen und Ihre E-Mail-Adresse eingeben und „Konto anlegen“ wählen.
+3. Kibo schickt einen Bestätigungslink an die Adresse. Kommt keine E-Mail an,
+   hilft „Bestätigungslink erneut senden“ auf der Seite, die nach der
+   Registrierung erscheint; ein Blick in den Spam-Ordner lohnt sich auch.
+4. Öffnen Sie den Link. Er bestätigt die Adresse und führt zur Seite
+   „Passwort festlegen“: Dort legen Sie Ihr Passwort fest, mindestens 12
+   Zeichen. Danach melden Sie sich damit an.
 
-Der Bestätigungslink meldet Sie nicht an. Er schaltet nur die Anmeldung frei.
+Der Bestätigungslink meldet Sie nicht an. Das Passwort legt erst fest, wer den
+Link aus dem Postfach geöffnet hat – so kann niemand ein Konto mit Ihrer
+Adresse anlegen und es mit einem eigenen Passwort nutzen. Gilt der Link nicht
+mehr, bevor Sie das Passwort gespeichert haben, fordern Sie über „Passwort
+vergessen“ auf der Anmeldeseite einen neuen an.
 
 Fehlt dieser Knopf, ist die Registrierung auf dieser Instanz geschlossen. Ein
 Konto bekommen Sie dann vom Betrieb der Instanz oder über eine

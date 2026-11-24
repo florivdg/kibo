@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, useId } from 'vue'
+import { computed, ref, useId } from 'vue'
 
 import CardHeading from '@/components/admin/CardHeading.vue'
 import FormError from '@/components/auth/FormError.vue'
 import NewPasswordFields from '@/components/auth/NewPasswordFields.vue'
+import ResetLinkError from '@/components/auth/ResetLinkError.vue'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -15,13 +16,21 @@ import { FieldGroup } from '@/components/ui/field'
 import { useFormSubmit } from '@/composables/use-form-submit'
 import { authClient } from '@/lib/auth-client'
 import { PASSWORD_MISMATCH, PASSWORD_RESET_MARKER } from '@/lib/auth-errors'
+import { PASSWORD_FORM_TEXTS, type PasswordFormMode } from '@/lib/password-form'
 
-const props = defineProps<{ token: string }>()
+const props = defineProps<{ token: string; mode: PasswordFormMode }>()
 
+const texts = computed(() => PASSWORD_FORM_TEXTS[props.mode])
 const password = ref('')
 const repeated = ref('')
 const { error, errorCode, pending, refuse, run } = useFormSubmit()
 const errorId = useId()
+// The link is good for one password and an hour; past that, the form gives
+// way to the page a rejected link shows
+const linkGone = computed(
+  () =>
+    errorCode.value === 'INVALID_TOKEN' || errorCode.value === 'TOKEN_EXPIRED',
+)
 
 async function submit() {
   if (password.value !== repeated.value) {
@@ -41,13 +50,11 @@ async function submit() {
 </script>
 
 <template>
-  <Card>
+  <ResetLinkError v-if="linkGone" :code="errorCode" />
+  <Card v-else>
     <CardHeader>
-      <CardHeading :level="1">Neues Passwort vergeben</CardHeading>
-      <CardDescription>
-        Danach melden Sie sich mit dem neuen Passwort an. Hinterlegte Passkeys
-        werden dabei entfernt.
-      </CardDescription>
+      <CardHeading :level="1">{{ texts.heading }}</CardHeading>
+      <CardDescription>{{ texts.description }}</CardDescription>
     </CardHeader>
     <CardContent>
       <form @submit.prevent="submit">

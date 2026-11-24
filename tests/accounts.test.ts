@@ -4,6 +4,7 @@ import { afterAll, describe, expect, test } from 'bun:test'
 import { inArray } from 'drizzle-orm'
 
 import {
+  account,
   invitation,
   member,
   organization,
@@ -30,11 +31,13 @@ import {
   pendingInvitationFor,
   purgeInvitations,
 } from '@/lib/organization-members'
+import { lockUser } from '@/lib/password-setup'
 import {
   purgeUnverifiedAccounts,
   UNVERIFIED_ACCOUNT_TTL_MS,
 } from '@/lib/unverified-accounts'
 
+import { addPasskeyRow } from './helpers/passkey'
 import { testDb } from './helpers/spam-db'
 
 const DAY = 24 * 60 * 60 * 1000
@@ -42,7 +45,11 @@ const now = new Date('2026-05-04T10:00:00.000Z')
 const users: string[] = []
 const organizations: string[] = []
 
-async function createUser(emailVerified: boolean, createdAt: Date) {
+async function createUser(
+  emailVerified: boolean,
+  createdAt: Date,
+  updatedAt = createdAt,
+) {
   const id = `test-${randomUUID()}`
   users.push(id)
   await testDb.insert(user).values({
@@ -51,9 +58,23 @@ async function createUser(emailVerified: boolean, createdAt: Date) {
     email: `${id}@example.org`,
     emailVerified,
     createdAt,
-    updatedAt: createdAt,
+    updatedAt,
   })
   return id
+}
+
+// The credential row every sign-up gets; `password` null once the address
+// was confirmed and before the account set one (src/lib/password-setup.ts)
+async function addCredential(userId: string, password: string | null) {
+  await testDb.insert(account).values({
+    id: randomUUID(),
+    accountId: userId,
+    providerId: 'credential',
+    userId,
+    password,
+    createdAt: now,
+    updatedAt: now,
+  })
 }
 
 // A Kita with its owner and the admins they invited
@@ -126,6 +147,7 @@ describe('purgeUnverifiedAccounts', () => {
     const abandoned = await createUser(false, old)
     const recent = await createUser(false, new Date(now.getTime() - DAY))
     const verified = await createUser(true, old)
+    await addCredential(verified, 'hash')
     // Unconfirmed but running a Kita: left alone
     const withKita = await createUser(false, old)
     await createOrganization({ owner: withKita })
@@ -135,6 +157,50 @@ describe('purgeUnverifiedAccounts', () => {
     expect(
       await existing(user, [abandoned, recent, verified, withKita]),
     ).toEqual([recent, verified, withKita].sort())
+  })
+
+  test('removes confirmed accounts that never got a password, a week after their last change', async () => {
+    const old = new Date(now.getTime() - UNVERIFIED_ACCOUNT_TTL_MS - DAY)
+    const abandoned = await createUser(true, old)
+    await addCredential(abandoned, null)
+    // Confirmed yesterday, after a week of waiting: still setting it up
+    const confirmedLately = await createUser(
+      true,
+      old,
+      new Date(now.getTime() - DAY),
+    )
+    await addCredential(confirmedLately, null)
+    const recent = await createUser(true, new Date(now.getTime() - DAY))
+    await addCredential(recent, null)
+    // Signs in with a passkey
+    const withPasskey = await createUser(true, old)
+    await addCredential(withPasskey, null)
+    await addPasskeyRow(withPasskey)
+    // Admin of a Kita: left to its owner
+    const withKita = await createUser(true, old)
+    await addCredential(withKita, null)
+    await createOrganization({ admins: [withKita] })
+    const withPassword = await createUser(true, old)
+    await addCredential(withPassword, 'hash')
+
+    await purgeUnverifiedAccounts(now)
+
+    const kept = [confirmedLately, recent, withPasskey, withKita, withPassword]
+    expect(await existing(user, [abandoned, ...kept])).toEqual(kept.sort())
+  })
+
+  test('skips an account whose row is locked at that moment', async () => {
+    const old = new Date(now.getTime() - UNVERIFIED_ACCOUNT_TTL_MS - DAY)
+    const busy = await createUser(false, old)
+    const abandoned = await createUser(false, old)
+
+    // A reset or confirmation holding the row (src/lib/password-setup.ts)
+    await testDb.transaction(async (on) => {
+      await lockUser(on, { id: busy })
+      await purgeUnverifiedAccounts(now)
+    })
+
+    expect(await existing(user, [busy, abandoned])).toEqual([busy])
   })
 })
 

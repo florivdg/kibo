@@ -36,9 +36,11 @@ export async function answer(request: Promise<Answer>) {
   return { status, code }
 }
 
-async function signIn(email: string) {
+// The session cookie of a fresh sign-in, as a browser would send it back;
+// Better Auth throws when the sign-in is refused
+export async function sessionCookie(email: string, password = PASSWORD) {
   const { headers } = await auth.api.signInEmail({
-    body: { email, password: PASSWORD },
+    body: { email, password },
     headers: new Headers(),
     returnHeaders: true,
   })
@@ -82,7 +84,7 @@ export function authRequests(network: string, prefix: string) {
       env: {},
       now: new Date(),
     })
-    return { id, email, cookie: await signIn(email) }
+    return { id, email, cookie: await sessionCookie(email) }
   }
 
   // A request to /api/auth/<path>, the way the browser sends it

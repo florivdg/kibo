@@ -144,7 +144,8 @@ const MESSAGES: Record<string, string> = {
 // Checked in the browser before a new password is sent
 export const PASSWORD_MISMATCH = 'Die beiden Passwörter stimmen nicht überein.'
 
-// Set on the login page after a reset, which asks to sign in afresh
+// Set on the login page after a password was saved through a reset link
+// (a reset, or an account's first password), which asks to sign in afresh
 export const PASSWORD_RESET_MARKER = 'passwordReset'
 
 export function authErrorMessage(error: {

@@ -127,10 +127,10 @@ docker compose exec -T app node dist/admin.mjs create-user \
 
 Ein Argument für das Passwort gibt es bewusst nicht: Argumente stehen in der
 Prozessliste und in der Shell-History. `--password` lehnt das Skript ab, und
-es gibt das Passwort nirgends aus; gespeichert wird wie bei der Registrierung
+es gibt das Passwort nirgends aus; gespeichert wird wie bei jedem Passwort
 nur der Hash von Better Auth.
 
-Es gelten dieselben Regeln wie bei der Registrierung: ein Passwort mit 12 bis
+Es gelten dieselben Regeln wie für jedes Konto: ein Passwort mit 12 bis
 128 Zeichen, ein Name mit höchstens 80 Zeichen ohne Links – und die
 Domain-Liste. Soll ein einzelnes Konto bewusst außerhalb der Liste liegen, die
 Variable für diesen einen Aufruf leeren:

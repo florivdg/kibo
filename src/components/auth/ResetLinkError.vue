@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/card'
 import { FieldGroup } from '@/components/ui/field'
 import { authErrorMessage } from '@/lib/auth-errors'
+import { FORGOT_PASSWORD_PATH } from '@/lib/auth-paths'
 
 const props = defineProps<{ code: string | null }>()
 
@@ -27,7 +28,7 @@ const message = authErrorMessage({ code: props.code ?? 'INVALID_TOKEN' })
     <CardContent>
       <FieldGroup>
         <FormError :message="message" />
-        <Button as="a" href="/admin/forgot-password">
+        <Button as="a" :href="FORGOT_PASSWORD_PATH">
           Neuen Link anfordern
         </Button>
       </FieldGroup>

@@ -13,11 +13,39 @@ export function needsOrganization(pathname: string): boolean {
   return !NO_ORGANIZATION_PATHS.has(pathname)
 }
 
-// Only allow redirects within the admin area (no open redirects)
+// Only allow redirects within the admin area (no open redirects). Checked
+// after the URL parser has normalised the path, since that is what the
+// browser follows: '/admin/..//evil.example' starts with /admin but resolves
+// to the protocol-relative '//evil.example'.
+const REDIRECT_BASE = 'http://localhost'
+const ADMIN_PATH = /^\/admin(?:\/|$)/
+
+function adminRedirectUrl(requested: string | null): URL {
+  if (requested?.startsWith('/')) {
+    try {
+      const url = new URL(requested, REDIRECT_BASE)
+      if (url.origin === REDIRECT_BASE && ADMIN_PATH.test(url.pathname)) {
+        return url
+      }
+    } catch {
+      // Not a URL at all: the default below
+    }
+  }
+  return new URL('/admin', REDIRECT_BASE)
+}
+
 export function adminRedirectTarget(requested: string | null): string {
-  return requested && /^\/admin(?:[/?#]|$)/.test(requested)
-    ? requested
-    : '/admin'
+  const url = adminRedirectUrl(requested)
+  return url.pathname + url.search + url.hash
+}
+
+// Whether a redirect target is already an admin path as the browser will
+// read it, unchanged by the normalisation above
+export function isAdminRedirect(requested: unknown): boolean {
+  return (
+    typeof requested === 'string' &&
+    adminRedirectTarget(requested) === requested
+  )
 }
 
 // The login, which leads back to the page that was asked for
@@ -29,9 +57,8 @@ export function loginUrl(url: URL): string {
 // admin area (never anywhere else), with the reason as ?error= like Better
 // Auth's own rejections, so the page shows it the same way
 export function linkErrorRedirect(callbackURL: unknown, code: string): string {
-  const target = new URL(
-    adminRedirectTarget(typeof callbackURL === 'string' ? callbackURL : null),
-    'http://localhost',
+  const target = adminRedirectUrl(
+    typeof callbackURL === 'string' ? callbackURL : null,
   )
   target.searchParams.set('error', code)
   return target.pathname + target.search

@@ -102,7 +102,7 @@ export function howItWorks(
   const first = signupOpen
     ? {
         title: 'Registrieren',
-        body: 'Mit Name, E-Mail-Adresse und Passwort. Die Adresse bestätigt ihr über den Link aus der Mail.',
+        body: 'Mit Name und E-Mail-Adresse. Über den Link aus der Mail bestätigt ihr die Adresse und legt euer Passwort fest.',
       }
     : {
         title: 'Konto bekommen',
@@ -225,7 +225,7 @@ export function faqEntries(
     ? [
         {
           question: 'Wie fangen wir an?',
-          answer: `Ihr registriert euch mit Name, E-Mail-Adresse und Passwort, bestätigt die Adresse und legt eure Kita an. Damit beginnt die Testphase: ${facts.trial}, ohne Zahlungsdaten.`,
+          answer: `Ihr registriert euch mit Name und E-Mail-Adresse, bestätigt die Adresse, wählt euer Passwort und legt eure Kita an. Damit beginnt die Testphase: ${facts.trial}, ohne Zahlungsdaten.`,
         },
       ]
     : []

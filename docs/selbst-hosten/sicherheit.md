@@ -137,6 +137,17 @@ Wer einen anderen Proxy nutzt, setzt dort ebenso nur HSTS und `nosniff`.
 Konto auf 20 Versuche pro Stunde begrenzt, zusätzlich zu den Grenzen pro Netz
 ([Spam-Schutz](./spam-schutz.md#anmeldung-und-auth-mails)).
 
+**Registrierung:** Die Registrierung fragt nur Name und E-Mail-Adresse ab. Wer
+sich registriert, muss das Postfach nicht besitzen, und eine zweite
+Registrierung derselben Adresse ändert nichts am bestehenden Konto. Deshalb
+schaltet die Bestätigung der Adresse nie ein vorher gesetztes Passwort frei:
+Sie löscht Passwort und Sitzungen des Kontos und führt zu „Passwort
+festlegen“ (ein Reset-Link mit einer Stunde Gültigkeit). Erst wer den Link
+aus dem Postfach geöffnet hat, legt das Passwort fest. Ein Passwort-Reset gilt
+umgekehrt auch als Bestätigung der Adresse, denn sein Link kam an sie. Sobald
+ein Passwort gespeichert ist, gilt kein anderer Reset-Link des Kontos mehr.
+Eine Adressänderung lässt das Passwort unberührt.
+
 **Passkeys:** Konten können Passkeys hinterlegen (höchstens 10). Eine
 Anmeldung mit Passkey ersetzt Passwort **und** zweiten Faktor; deshalb
 verlangt der Server bei Einrichtung und Anmeldung die Bestätigung durch das

@@ -1,3 +1,5 @@
+import { jwtVerify } from 'jose'
+
 // Better Auth's verification links carry a signed JWT. Its payload says which
 // flow a link belongs to: a plain sign-up confirmation has only `email`, the
 // last step of an address change also `updateTo` and this request type.
@@ -5,7 +7,8 @@ const EMAIL_CHANGE_VERIFICATION = 'change-email-verification'
 
 // Reads the payload without checking the signature. That is enough to pick a
 // mail template or to turn a link away; whether a link is accepted is still
-// decided by Better Auth, which does verify it.
+// decided by Better Auth, which does verify it. Anything that grants more
+// goes through verifiedSignUpConfirmation below.
 function tokenPayload(token: unknown): Record<string, unknown> {
   const payload = typeof token === 'string' ? token.split('.')[1] : undefined
   if (!payload) return {}
@@ -24,6 +27,28 @@ function tokenPayload(token: unknown): Record<string, unknown> {
 // True for the link that switches an account to its new address
 export function isEmailChangeVerification(token: unknown): boolean {
   return tokenPayload(token).requestType === EMAIL_CHANGE_VERIFICATION
+}
+
+// A sign-up confirmation, checked the way Better Auth's /verify-email checks
+// it (signature, HS256 only, expiry): its address and, in links Better Auth
+// made, the account's id. Undefined for anything else, both links of an
+// address change (they carry `updateTo`) included.
+export async function verifiedSignUpConfirmation(
+  token: unknown,
+  secret: string,
+): Promise<{ email: string; userId?: string } | undefined> {
+  if (typeof token !== 'string') return undefined
+  const payload = await jwtVerify(token, new TextEncoder().encode(secret), {
+    algorithms: ['HS256'],
+  }).then(
+    (verified) => verified.payload,
+    () => undefined,
+  )
+  if (!payload) return undefined
+  const { email, updateTo, userId } = payload
+  if (updateTo !== undefined || typeof email !== 'string') return undefined
+  if (userId !== undefined && typeof userId !== 'string') return undefined
+  return { email, userId }
 }
 
 // Where the last link of an address change leads: the account page, marked as
