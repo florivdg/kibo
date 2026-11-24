@@ -74,9 +74,10 @@ async function submit() {
       <CardHeading>E-Mail-Adresse ändern</CardHeading>
       <CardDescription>
         Aktuell:
-        <span class="font-medium text-foreground">{{ props.currentEmail }}</span
-        >. Die Änderung bestätigen Sie in zwei Schritten: zuerst über Ihre
-        bisherige Adresse, dann über die neue.
+        <span class="font-medium text-foreground">{{
+          props.currentEmail
+        }}</span>. Die Änderung bestätigen Sie in zwei Schritten: zuerst über
+        Ihre bisherige Adresse, dann über die neue.
       </CardDescription>
     </CardHeader>
     <CardContent>
